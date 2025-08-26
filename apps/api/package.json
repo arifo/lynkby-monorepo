@@ -1,0 +1,21 @@
+{
+  "name": "@lynkby/api",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --local --config wrangler.toml --port 8787",
+    "build": "tsc -p tsconfig.json",
+    "deploy": "pnpm build && wrangler deploy --config wrangler.toml",
+    "deploy:dev": "pnpm build && wrangler deploy --config wrangler.toml --env development",
+    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production"
+  },
+  "dependencies": {
+    "@lynkby/shared": "workspace:*",
+    "hono": "^4.5.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250115.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^4.32.0"
+  }
+}

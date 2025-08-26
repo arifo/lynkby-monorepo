@@ -7,15 +7,35 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "pnpm --filter @lynkby/web dev",
-    "dev:dashboard": "pnpm --filter @lynkby/dashboard dev",
-    "dev:worker": "pnpm --filter @lynkby/worker dev",
-    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter \"./apps/**\" dev",
+    "build": "pnpm --parallel --filter \"./apps/**\" build",
+    "deploy:all": "pnpm --parallel --filter \"./apps/**\" deploy:prod",
+    "deploy:all:dev": "pnpm --parallel --filter \"./apps/**\" deploy:dev",
+    "deploy:app": "pnpm --filter @lynkby/app deploy:prod",
+    "deploy:api": "pnpm --filter @lynkby/api deploy:prod",
+    "deploy:web": "pnpm --filter @lynkby/web deploy:prod",
+    "deploy:marketing": "pnpm --filter @lynkby/marketing deploy:prod",
+    "deploy:app:dev": "pnpm --filter @lynkby/app deploy:dev",
+    "deploy:api:dev": "pnpm --filter @lynkby/api deploy:dev",
+    "deploy:web:dev": "pnpm --filter @lynkby/web deploy:dev",
+    "deploy:marketing:dev": "pnpm --filter @lynkby/marketing deploy:dev",
     "typecheck": "tsc -b --verbose",
-    "format": "prettier -w ."
+    "format": "prettier -w .",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "clean": "pnpm -r exec -- rm -rf .next .open-next dist node_modules/.cache",
+    "install:all": "pnpm install",
+    "prisma:generate": "pnpm --filter @lynkby/app prisma:generate",
+    "prisma:migrate": "pnpm --filter @lynkby/app prisma:migrate",
+    "prisma:studio": "pnpm --filter @lynkby/app prisma:studio",
+    "prisma:seed": "pnpm --filter @lynkby/app prisma:seed"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
+    "prisma": "6.14.0",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@prisma/client": "6.14.0"
   }
 }
