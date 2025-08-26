@@ -46,6 +46,9 @@ importers:
       '@prisma/client':
         specifier: ^6.14.0
         version: 6.14.0(prisma@6.14.0(typescript@5.9.2))(typescript@5.9.2)
+      hono:
+        specifier: ^4.5.7
+        version: 4.9.4
       next:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -59,6 +62,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250115.0
+        version: 4.20250826.0
       '@types/node':
         specifier: ^20.19.11
         version: 20.19.11
@@ -80,6 +86,9 @@ importers:
 
   apps/marketing:
     dependencies:
+      hono:
+        specifier: ^4.5.7
+        version: 4.9.4
       next:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -90,6 +99,9 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250115.0
+        version: 4.20250826.0
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.11
@@ -108,6 +120,9 @@ importers:
       '@lynkby/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      hono:
+        specifier: ^4.5.7
+        version: 4.9.4
       next:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -118,6 +133,9 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250115.0
+        version: 4.20250826.0
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.11

@@ -1,35 +1,92 @@
 name: Deploy Workers (Monorepo)
 on:
   push:
-    branches: [ main ]
+    tags:
+      - 'v*'
+      - 'app-*'
+      - 'api-*'
+      - 'web-*'
+      - 'marketing-*'
   workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - app
+          - api
+          - web
+          - marketing
 
 jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      app: ${{ steps.filter.outputs.app }}
+      api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
-      dashboard: ${{ steps.filter.outputs.dashboard }}
-      worker: ${{ steps.filter.outputs.worker }}
+      marketing: ${{ steps.filter.outputs.marketing }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
+            app:
+              - 'apps/app/**'
+              - 'packages/**'
+            api:
+              - 'apps/api/**'
+              - 'packages/**'
             web:
               - 'apps/web/**'
               - 'packages/**'
-            dashboard:
-              - 'apps/dashboard/**'
+            marketing:
+              - 'apps/marketing/**'
               - 'packages/**'
-            worker:
-              - 'apps/worker/**'
-              - 'packages/**'
+
+  deploy-app:
+    needs: changes
+    if: needs.changes.outputs.app == 'true' || github.event.inputs.app == 'app' || github.event.inputs.app == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter ./apps/app build
+      - run: pnpm --filter ./apps/app wrangler deploy --config wrangler.toml --env production
+        working-directory: apps/app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+  deploy-api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true' || github.event.inputs.app == 'api' || github.event.inputs.app == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter ./apps/api build
+      - run: pnpm --filter ./apps/api wrangler deploy --config wrangler.toml --env production
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
   deploy-web:
     needs: changes
-    if: needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.web == 'true' || github.event.inputs.app == 'web' || github.event.inputs.app == 'all'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,15 +96,15 @@ jobs:
         with: { node-version: 20, cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter ./apps/web build
-      - run: pnpm --filter ./apps/web wrangler deploy --config wrangler.toml
+      - run: pnpm --filter ./apps/web wrangler deploy --config wrangler.toml --env production
         working-directory: apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
-  deploy-dashboard:
+  deploy-marketing:
     needs: changes
-    if: needs.changes.outputs.dashboard == 'true'
+    if: needs.changes.outputs.marketing == 'true' || github.event.inputs.app == 'marketing' || github.event.inputs.app == 'all'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,27 +113,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter ./apps/dashboard build
-      - run: pnpm --filter ./apps/dashboard wrangler deploy --config wrangler.toml
-        working-directory: apps/dashboard
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-
-  deploy-worker:
-    needs: changes
-    if: needs.changes.outputs.worker == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'pnpm' }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter ./apps/worker build
-      - run: pnpm --filter ./apps/worker wrangler deploy --config wrangler.toml
-        working-directory: apps/worker
+      - run: pnpm --filter ./apps/marketing build
+      - run: pnpm --filter ./apps/marketing wrangler deploy --config wrangler.toml --env production
+        working-directory: apps/marketing
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

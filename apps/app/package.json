@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "deploy": "pnpm build && wrangler pages deploy .next --config wrangler.toml",
-    "deploy:dev": "pnpm build && wrangler pages deploy .next --config wrangler.toml --env development",
-    "deploy:prod": "pnpm build && wrangler pages deploy .next --config wrangler.toml --env production",
+    "deploy": "pnpm build && wrangler deploy --config wrangler.toml",
+    "deploy:dev": "pnpm build && wrangler deploy --config wrangler.toml --env development",
+    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production",
     "prisma:migrate": "prisma migrate dev --schema ../../prisma/schema.prisma",
     "prisma:generate": "prisma generate --schema ../../prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema ../../prisma/schema.prisma",
@@ -18,11 +18,13 @@
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "hono": "^4.5.7"
   },
   "devDependencies": {
     "@types/node": "^20.19.11",
     "@types/react": "^18.3.5",
+    "@cloudflare/workers-types": "^4.20250115.0",
     "prisma": "6.14.0",
     "tsx": "^4.20.5",
     "typescript": "^5.5.4",

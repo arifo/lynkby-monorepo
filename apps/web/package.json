@@ -5,20 +5,22 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "deploy": "pnpm build && wrangler pages deploy out --config wrangler.toml",
-    "deploy:dev": "pnpm build && wrangler pages deploy out --config wrangler.toml --env development",
-    "deploy:prod": "pnpm build && wrangler pages deploy out --config wrangler.toml --env production"
+    "deploy": "pnpm build && wrangler deploy --config wrangler.toml",
+    "deploy:dev": "pnpm build && wrangler deploy --config wrangler.toml --env development",
+    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production"
   },
   "dependencies": {
     "@lynkby/shared": "workspace:*",
     "next": "14.2.5",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "hono": "^4.5.7"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
     "@types/react": "^18.3.5",
     "@types/node": "^20.14.10",
+    "@cloudflare/workers-types": "^4.20250115.0",
     "wrangler": "^4.4.0"
   }
 }

@@ -4,10 +4,10 @@ This guide covers deploying the Lynkby platform to Cloudflare, including the mai
 
 ## Architecture Overview
 
-- **App** (`@lynkby/app`): Main dashboard application deployed to Cloudflare Pages at `app.lynkby.com`
-- **Web** (`@lynkby/web`): Public-facing web app deployed to Cloudflare Pages at `lynkby.com`
-- **API** (`@lynkby/api`): Edge API handling subdomain routing and caching at `api.lynkby.com`
-- **Marketing** (`@lynkby/marketing`): Marketing website deployed to Cloudflare Pages at `lynkby.com`
+- **App** (`@lynkby/app`): Main dashboard application deployed to Cloudflare Workers at `app.lynkby.com`
+- **Web** (`@lynkby/web`): Public-facing profile pages deployed to Cloudflare Workers at `*.lynkby.com/*`
+- **API** (`@lynkby/api`): Edge API handling data operations and caching at `api.lynkby.com`
+- **Marketing** (`@lynkby/marketing`): Marketing website deployed to Cloudflare Workers at `lynkby.com`
 
 ## Prerequisites
 
@@ -24,25 +24,21 @@ Each app has its own `.dev.vars` file for local development:
 
 ```bash
 # apps/app/.dev.vars
-DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
-API_REVALIDATE_URL=https://lynkby-api.arifento85.workers.dev/_revalidate
-REVALIDATE_SECRET=dev-secret-change-me
 NODE_ENV=development
-NEXTAUTH_SECRET=dev-secret-change-me-in-production
-NEXTAUTH_URL=http://localhost:3001
-DIRECT_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
+APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
 
 # apps/web/.dev.vars
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api.arifento85.workers.dev
 NODE_ENV=development
+NEXT_PUBLIC_APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
 
 # apps/api/.dev.vars
+NODE_ENV=development
 APP_API_BASE=https://app.lynkby.com
 REVALIDATE_SECRET=dev-secret-change-me
 
 # apps/marketing/.dev.vars
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api.arifento85.workers.dev
 NODE_ENV=development
+NEXT_PUBLIC_APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
 ```
 
 ### 2. Start Development Servers
@@ -74,7 +70,7 @@ pnpm deploy:all
 
 # Or deploy individually
 pnpm deploy:app        # Deploy main app to app.lynkby.com
-pnpm deploy:web        # Deploy web app to lynkby.com
+pnpm deploy:web        # Deploy web app to *.lynkby.com/*
 pnpm deploy:api        # Deploy API to api.lynkby.com
 pnpm deploy:marketing  # Deploy marketing to lynkby.com
 ```
@@ -96,54 +92,53 @@ pnpm deploy:marketing:dev
 
 ### Production Routes
 
-- **App**: `app.lynkby.com/*` → Cloudflare Pages
-- **Web**: `lynkby.com/*` → Cloudflare Pages  
-- **API**: `api.lynkby.com/*` → Cloudflare Workers
-- **Marketing**: `lynkby.com/*` → Cloudflare Pages
+- **App**: `app.lynkby.com/*` → Cloudflare Workers (`lynkby-app.arifento85.workers.dev`)
+- **Web**: `*.lynkby.com/*` → Cloudflare Workers (`lynkby-web.arifento85.workers.dev`)
+- **API**: `api.lynkby.com/*` → Cloudflare Workers (`lynkby-api.arifento85.workers.dev`)
+- **Marketing**: `lynkby.com/*` → Cloudflare Workers (`lynkby-marketing.arifento85.workers.dev`)
 
 ### Development Routes
 
-- **App**: `app-dev.lynkby.com/*` → Cloudflare Pages
-- **Web**: `web-dev.lynkby.com/*` → Cloudflare Pages
-- **API**: `api.lynkby.com/*` → Cloudflare Workers
-- **Marketing**: `marketing-dev.lynkby.com/*` → Cloudflare Pages
+- **App**: `app-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-app-dev.arifento85.workers.dev`)
+- **Web**: `*.lynkby.com/*` → Cloudflare Workers (`lynkby-web-dev.arifento85.workers.dev`)
+- **API**: `api-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-api-dev.arifento85.workers.dev`)
+- **Marketing**: `marketing-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-marketing-dev.arifento85.workers.dev`)
 
 ## Performance Strategy
 
-### Static Export (Web & Marketing)
+### Cloudflare Workers Architecture
 
-The web and marketing apps use `output: 'export'` for maximum speed:
-
-```javascript
-// next.config.mjs
-const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
-  images: { unoptimized: true }
-};
-```
-
-### Server-Side Rendering (App)
-
-The main app uses SSR for dynamic API routes:
-
-```javascript
-// next.config.mjs
-const nextConfig = {
-  reactStrictMode: true
-};
-```
-
-### Edge Caching (API)
-
-The API implements intelligent caching:
+All apps now deploy as Cloudflare Workers for maximum performance:
 
 ```typescript
-// Cache HTML responses
+// Example: apps/web/src/index.ts
+import { Hono } from "hono";
+
+const app = new Hono<{ Bindings: Env }>();
+
+// Handle wildcard subdomains for user profiles
+app.get("*", async (c) => {
+  const hostname = c.req.url;
+  const subdomain = hostname.split('.')[0];
+  // Serve dynamic profile pages
+});
+```
+
+### Edge Caching & Performance
+
+- **Global Edge Network**: Deployed to 200+ locations worldwide
+- **Zero Cold Starts**: Workers are always warm and ready
+- **Intelligent Caching**: Built-in caching with custom cache policies
+- **Subdomain Routing**: Dynamic routing for unlimited user profiles
+
+### Caching Strategy
+
+```typescript
+// Cache HTML responses for profiles
 const cache = caches.default;
 c.executionCtx.waitUntil(cache.put(c.req.raw, res.clone()));
 
-// Cache JSON responses
+// Cache JSON responses with SWR
 "Cache-Control": "public, max-age=30, s-maxage=300, stale-while-revalidate=60"
 ```
 
@@ -151,11 +146,12 @@ c.executionCtx.waitUntil(cache.put(c.req.raw, res.clone()));
 
 ### Production Variables
 
-Set in `wrangler.toml`:
+Set in `wrangler.toml` environment sections:
 
 ```toml
-[vars]
+[env.production.vars]
 NODE_ENV = "production"
+APP_API_BASE = "https://api.lynkby.com"
 ```
 
 ### Development Variables
@@ -164,8 +160,31 @@ Use `.dev.vars` files (gitignored):
 
 ```bash
 # Example: apps/app/.dev.vars
-DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
+NODE_ENV=development
+APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
 ```
+
+## GitHub Actions Deployment
+
+### Tag-Based Deployment
+
+Deployments are triggered by Git tags:
+
+```bash
+# Deploy all apps
+git tag v1.0.0
+git push origin v1.0.0
+
+# Deploy specific app
+git tag app-v1.0.0
+git push origin app-v1.0.0
+```
+
+### Manual Deployment
+
+Use GitHub Actions UI to manually trigger deployments:
+- Go to Actions → Deploy Workers → Run workflow
+- Choose app: `all`, `app`, `api`, `web`, or `marketing`
 
 ## Troubleshooting
 
@@ -174,7 +193,7 @@ DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=di
 1. **Build Failures**: Ensure all dependencies are installed with `pnpm install`
 2. **Environment Variables**: Check `.dev.vars` files for local development
 3. **Port Conflicts**: Each app uses different ports (3000, 3001, 3002, 8787)
-4. **Database Connection**: Verify PostgreSQL is running and accessible
+4. **Worker Deployment**: Verify `src/index.ts` exists for Worker apps
 
 ### Debug Commands
 
@@ -188,6 +207,10 @@ pnpm clean
 
 # Reinstall dependencies
 pnpm install:all
+
+# Test individual deployments
+pnpm --filter @lynkby/app deploy:dev
+pnpm --filter @lynkby/api deploy:dev
 ```
 
 ## Security Considerations
@@ -196,11 +219,35 @@ pnpm install:all
 - **API Keys**: Use Cloudflare's secret management for sensitive data
 - **CORS**: Configure appropriate CORS policies for cross-origin requests
 - **Rate Limiting**: Implement rate limiting in the API for public endpoints
+- **Subdomain Validation**: Validate usernames to prevent abuse
 
 ## Monitoring & Analytics
 
-- **Cloudflare Analytics**: Built-in analytics for Pages and Workers
+- **Cloudflare Analytics**: Built-in analytics for Workers
 - **Error Tracking**: Monitor API errors in Cloudflare dashboard
 - **Performance**: Use Cloudflare's performance insights and caching analytics
+- **Real-time Metrics**: Monitor Worker performance and errors in real-time
+
+## Worker-Specific Features
+
+### App Worker (`@lynkby/app`)
+- Dashboard interface for profile management
+- API proxy to main API worker
+- User authentication and profile editing
+
+### Web Worker (`@lynkby/web`)
+- Wildcard subdomain routing (`*.lynkby.com`)
+- Dynamic profile page generation
+- Client-side data fetching from API
+
+### API Worker (`@lynkby/api`)
+- Data operations and caching
+- Public read-only endpoints
+- Profile revalidation and cache management
+
+### Marketing Worker (`@lynkby/marketing`)
+- Main marketing website
+- Static content with dynamic elements
+- Integration with other services
 
 
