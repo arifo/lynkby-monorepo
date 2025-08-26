@@ -1,0 +1,13 @@
+name = "lynkby-worker"
+main = "src/index.ts"
+compatibility_date = "2025-08-01"
+
+#routes = [
+#  # Wildcard public pages: user.lynkby.com
+#  { pattern = "https://*.lynkby.com/*" }  # ✅ zone route supports wildcard
+#]
+
+# Add bindings as you go:
+# kv_namespaces = [{ binding = "SESSIONS", id = "xxxx" }]
+# r2_buckets = [{ binding = "ASSETS", bucket_name = "lynkby-assets" }]
+# hyperdrive = [{ binding = "DB", id = "xxxx" }]

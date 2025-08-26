@@ -1,0 +1,21 @@
+{
+  "name": "lynkby",
+  "private": true,
+  "packageManager": "pnpm@9.6.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "pnpm --filter @lynkby/web dev",
+    "dev:dashboard": "pnpm --filter @lynkby/dashboard dev",
+    "dev:worker": "pnpm --filter @lynkby/worker dev",
+    "build": "pnpm -r build",
+    "typecheck": "tsc -b --verbose",
+    "format": "prettier -w ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
