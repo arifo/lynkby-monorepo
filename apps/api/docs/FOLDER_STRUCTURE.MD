@@ -57,7 +57,7 @@ Here’s a scalable, “feature-first” folder structure for your Cloudflare AP
 │  │  │  ├─ auth.ts              # Bearer/JWT/session validation (reads from env)
 │  │  │  ├─ rate-limit.ts        # KV/DO/Turnstile based limiter
 │  │  │  ├─ cors.ts
-│  │  │  └─ cache.ts             # CDN/Cache API helpers
+│  │  │  └─ cache.ts             # CDN/Cache API helpego rs
 │  │  ├─ cache/
 │  │  │  ├─ kv.ts                # KV helpers
 │  │  │  └─ r2.ts                # R2 helpers (avatars, thumbnails)

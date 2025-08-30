@@ -32,6 +32,12 @@
       ],
       "@schemas/*": [
         "src/schemas/*"
+      ],
+      "@auth/*": [
+        "src/features/auth/*"
+      ],
+      "@pages/*": [
+        "src/features/pages/*"
       ]
     }
   },
