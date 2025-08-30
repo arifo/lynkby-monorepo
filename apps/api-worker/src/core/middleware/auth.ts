@@ -47,7 +47,7 @@ export const auth = async (c: Context, next: Next): Promise<void> => {
     c.set("user", {
       id: decoded.userId,
       email: decoded.email,
-      username: decoded.username
+      username: decoded.username!
     });
     
     await next();
@@ -75,7 +75,7 @@ export const optionalAuth = async (c: Context, next: Next): Promise<void> => {
         c.set("user", {
           id: decoded.userId,
           email: decoded.email,
-          username: decoded.username
+          username: decoded.username!
         });
       } catch (error) {
         // Silently fail for optional auth

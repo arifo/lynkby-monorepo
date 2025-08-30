@@ -51,7 +51,7 @@ export default async function handler(
     }
 
     const profile: ProfileDTO = {
-      username: user.username,
+      username: user.username!,
       displayName: user.page.displayName,
       bio: user.page.bio,
       avatarUrl: user.page.avatarUrl,

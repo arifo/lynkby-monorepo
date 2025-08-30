@@ -86,7 +86,7 @@ export class AuthController {
       // Build magic link URL that lands on the app's callback page
       const appBase = c.env.NODE_ENV === "production" ? "https://app.lynkby.com" : "http://localhost:3001";
       const verificationUrl = `${appBase}/auth/callback?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirectPath || "/dashboard")}`;
-      const RESEND_API_KEY = c.env.RESEND_API_KEY || 're_QmbfgnVN_6FzgUqV4HBay6VmL2DinZZgu'
+      const RESEND_API_KEY = c.env.RESEND_API_KEY 
       // Send magic link email (Resend if configured)
       await authService.sendMagicLinkEmail(email, verificationUrl, {
         provider: RESEND_API_KEY ? 'resend' : undefined,
