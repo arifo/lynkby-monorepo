@@ -15,8 +15,31 @@ if (typeof process !== 'undefined') {
 // Main fetch handler for HTTP requests
 const worker = {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
-    const app = createApp(env);
-    return app.fetch(request, env, ctx);
+    try {
+      console.log("🚀 Worker fetch handler called");
+      console.log("Environment keys:", Object.keys(env));
+      
+      const app = createApp(env);
+      return app.fetch(request, env, ctx);
+    } catch (error) {
+      console.error("❌ Worker fetch handler error:", error);
+      
+      // Return a proper error response
+      return new Response(
+        JSON.stringify({
+          error: "Internal Server Error",
+          message: "Failed to initialize application",
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
+        }
+      );
+    }
   },
 
   // Queue consumer for background processing

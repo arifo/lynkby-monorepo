@@ -4,6 +4,7 @@ import { UserRepository, PageRepository } from "../core/repositories";
 import { logger } from "../core/util/logger";
 import { createError } from "../core/errors";
 import { captureError, captureMessage, addBreadcrumb } from "../core/sentry";
+import { checkDatabaseHealth } from "../core/db";
 
 const healthRouter = new Hono();
 
@@ -12,8 +13,8 @@ healthRouter.get("/_health", async (c) => {
   try {
     const startTime = Date.now();
     
-    // Basic health check
-    const health = await databaseService.healthCheck();
+    // Basic health check - pass env for Cloudflare Workers compatibility
+    const health = await checkDatabaseHealth(c.env as any);
     const responseTime = Date.now() - startTime;
     
     return c.json({
@@ -153,8 +154,8 @@ healthRouter.get("/_health/detailed", async (c) => {
   try {
     const startTime = Date.now();
     
-    // Check database health
-    const dbHealth = await databaseService.healthCheck();
+    // Check database health - pass env for Cloudflare Workers compatibility
+    const dbHealth = await checkDatabaseHealth(c.env as any);
     
     // Get sample data to verify database functionality
     const userRepository = new UserRepository();
@@ -233,8 +234,8 @@ healthRouter.get("/_ready", async (c) => {
   try {
     const startTime = Date.now();
     
-    // Check if database is ready
-    const dbHealth = await databaseService.healthCheck();
+    // Check if database is ready - pass env for Cloudflare Workers compatibility
+    const dbHealth = await checkDatabaseHealth(c.env as any);
     const responseTime = Date.now() - startTime;
     
     if (dbHealth.status === "healthy") {
@@ -268,5 +269,7 @@ healthRouter.get("/_ready", async (c) => {
     );
   }
 });
+
+
 
 export default healthRouter;

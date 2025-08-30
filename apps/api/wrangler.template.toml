@@ -27,6 +27,10 @@ max_batch_timeout = 30
 max_retries = 3
 dead_letter_queue = "tiktok-sync-dlq"
 
+# Observsbility
+[observability.logs]
+enabled = true
+
 # Development Environment
 [env.development]
 name = "lynkby-api-dev"
@@ -34,24 +38,50 @@ name = "lynkby-api-dev"
 # Environment variables for development
 [env.development.vars]
 NODE_ENV = "development"
-# JWT_SECRET = "your-dev-jwt-secret-here"
-# SENTRY_DSN = "https://your-dev-sentry-dsn@sentry.io/project-id"
-# DATABASE_URL = "https://your-dev-database-url"
-# DIRECT_URL = "https://your-dev-direct-url"
-# STRIPE_SECRET_KEY = "sk_test_your_stripe_test_key"
+# APP_API_BASE=http://localhost:3001
+# REVALIDATE_SECRET = "your-production-revalidate-secret-here"
+
+# JWT_SECRET = "your-production-jwt-secret-must-be-at-least-32-chars-long"
+# JWT_EXPIRES_IN = "7d"
+
+# SENTRY_DSN = "https://your-production-sentry-dsn@sentry.io/project-id"
+
+# DATABASE_URL = "https://your-production-database-url"
+# DIRECT_URL = "https://your-production-direct-url"
+
+# Stripe Configuration
+# STRIPE_SECRET_KEY="sk_test_your_stripe_test_key_here"
+# STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret_here"
+
+# TikTok Configuration
+# TIKTOK_CLIENT_KEY="your_tiktok_client_key_here"
+# TIKTOK_CLIENT_SECRET="your_tiktok_client_secret_here"
 
 # Production Environment
 [env.production]
-name = "lynkby-api-prod"
+name = "lynkby-api"
 
 # Environment variables for production
 [env.production.vars]
 NODE_ENV = "production"
-# JWT_SECRET = "your-production-jwt-secret-here"
+# APP_API_BASE=http://localhost:3001
+# REVALIDATE_SECRET = "your-production-revalidate-secret-here"
+
+# JWT_SECRET = "your-production-jwt-secret-must-be-at-least-32-chars-long"
+# JWT_EXPIRES_IN = "7d"
+
 # SENTRY_DSN = "https://your-production-sentry-dsn@sentry.io/project-id"
+
 # DATABASE_URL = "https://your-production-database-url"
 # DIRECT_URL = "https://your-production-direct-url"
-# STRIPE_SECRET_KEY = "sk_live_your_stripe_live_key"
+
+# Stripe Configuration
+# STRIPE_SECRET_KEY="sk_test_your_stripe_test_key_here"
+# STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret_here"
+
+# TikTok Configuration
+# TIKTOK_CLIENT_KEY="your_tiktok_client_key_here"
+# TIKTOK_CLIENT_SECRET="your_tiktok_client_secret_here"
 
 # Cron triggers
 [triggers]

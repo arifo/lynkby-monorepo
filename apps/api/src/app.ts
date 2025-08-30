@@ -2,13 +2,15 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { parseEnv, type AppEnv } from "./core/env";
+import { validateEnv, type AppEnv } from "./core/env";
 import { errorHandler } from "./core/errors";
 import mainRouter from "./routes";
 
 export function createApp(env: unknown): Hono<{ Bindings: AppEnv }> {
   const app = new Hono<{ Bindings: AppEnv }>();
-  const parsedEnv = parseEnv(env);
+  
+  // Validate environment variables once at startup
+  const parsedEnv = validateEnv(env);
   
   // Global middleware
   app.use("*", logger());

@@ -1,5 +1,5 @@
 import { Client } from '@neondatabase/serverless';
-import { getNeonClient, checkDatabaseHealth } from "../db";
+import { dbFactory } from "../db";
 import { logger } from "../util/logger";
 import { createError } from "../errors";
 import { DB_CONFIG } from "../env";
@@ -19,7 +19,6 @@ export class DatabaseService implements IDatabaseService {
   private isShuttingDown: boolean = false;
 
   constructor() {
-    // Don't store client instance - create new one for each operation
     this.setupGracefulShutdown();
   }
 
@@ -64,7 +63,9 @@ export class DatabaseService implements IDatabaseService {
     }
 
     try {
-      const health = await checkDatabaseHealth();
+      // Use the centralized health check function
+      const { dbFactory } = await import("../db");
+      const health = await import("../db").then(m => m.checkDatabaseHealth());
       this.isHealthy = health.status === "healthy";
       return health;
     } catch (error) {
@@ -142,14 +143,14 @@ export class DatabaseService implements IDatabaseService {
   async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     return this.executeWithRetry(
       async () => {
-        // Create a new client for each operation as recommended by Neon
-        const client = new Client(process.env.DATABASE_URL!);
+        // Use the centralized factory to get a client
+        const client = dbFactory.getClient();
         await client.connect();
         try {
           const { rows } = await client.query(sql, params);
           return rows as T[];
         } finally {
-          await client.end();
+          await dbFactory.closeClient(client);
         }
       },
       `query: ${sql.substring(0, 50)}...`
@@ -160,13 +161,13 @@ export class DatabaseService implements IDatabaseService {
   async execute(sql: string, params: any[] = []): Promise<void> {
     return this.executeWithRetry(
       async () => {
-        // Create a new client for each operation as recommended by Neon
-        const client = new Client(process.env.DATABASE_URL!);
+        // Use the centralized factory to get a client
+        const client = dbFactory.getClient();
         await client.connect();
         try {
           await client.query(sql, params);
         } finally {
-          await client.end();
+          await dbFactory.closeClient(client);
         }
       },
       `execute: ${sql.substring(0, 50)}...`

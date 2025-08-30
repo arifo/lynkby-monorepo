@@ -1,6 +1,5 @@
 import * as Sentry from "@sentry/cloudflare";
 import type { AppEnv } from "./env";
-import { SecurityUtils } from "./env";
 
 // Sentry configuration constants
 export const SENTRY_CONFIG = {
@@ -29,7 +28,9 @@ export function createSentryConfig(env: AppEnv) {
       throw new Error('Invalid Sentry DSN format');
     }
   } catch (error) {
-    console.error("Invalid Sentry DSN format:", SecurityUtils.maskSecret(env.SENTRY_DSN, "url"));
+    // Simple URL masking for logging
+    const maskedDsn = env.SENTRY_DSN ? `${env.SENTRY_DSN.substring(0, 20)}...` : "undefined";
+    console.error("Invalid Sentry DSN format:", maskedDsn);
     // Return minimal config to avoid TypeScript errors
     return {
       dsn: "https://dummy@dummy.ingest.sentry.io/dummy",

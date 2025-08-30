@@ -8,51 +8,80 @@ const DB_CONFIG = {
   QUERY_TIMEOUT: 10000,
 } as const;
 
-// Global Neon client instance for connection pooling
-let neonClient: Client | null = null;
-
-// Initialize Neon client for Cloudflare Workers
-export function createNeonClient(): Client {
-  if (neonClient) {
-    return neonClient;
-  }
-
-  try {
-    // Create Neon serverless client
-    // This is the recommended approach for Cloudflare Workers according to Neon docs
-    neonClient = new Client(process.env.DATABASE_URL!);
-    
-    logger.info("Neon serverless client created successfully");
-    return neonClient;
-  } catch (error) {
-    logger.error("Failed to create Neon client", { error });
-    throw error;
-  }
+// Database client factory interface
+export interface IDatabaseClientFactory {
+  getClient(env?: { DATABASE_URL?: string }): Client;
+  getClientForHealthCheck(env?: { DATABASE_URL?: string }): Client;
+  closeClient(client: Client): Promise<void>;
 }
 
-// Get the Neon client instance
-export function getNeonClient(): Client {
-  if (!neonClient) {
-    return createNeonClient();
+// Database client factory implementation
+export class DatabaseClientFactory implements IDatabaseClientFactory {
+  private static instance: DatabaseClientFactory;
+  
+  private constructor() {}
+  
+  // Singleton pattern
+  static getInstance(): DatabaseClientFactory {
+    if (!DatabaseClientFactory.instance) {
+      DatabaseClientFactory.instance = new DatabaseClientFactory();
+    }
+    return DatabaseClientFactory.instance;
   }
-  return neonClient;
-}
-
-// Graceful shutdown
-export async function disconnectNeon(): Promise<void> {
-  if (neonClient) {
+  
+  // Get a database client for general use
+  getClient(env?: { DATABASE_URL?: string }): Client {
+    const databaseUrl = this.getDatabaseUrl(env);
+    return new Client(databaseUrl);
+  }
+  
+  // Get a database client specifically for health checks
+  getClientForHealthCheck(env?: { DATABASE_URL?: string }): Client {
+    const databaseUrl = this.getDatabaseUrl(env);
+    return new Client(databaseUrl);
+  }
+  
+  // Close a database client
+  async closeClient(client: Client): Promise<void> {
     try {
-      await neonClient.end();
-      neonClient = null;
-      logger.info("Neon client disconnected successfully");
+      await client.end();
     } catch (error) {
-      logger.error("Error disconnecting Neon client", { error });
+      logger.error("Error closing database client", { error });
     }
   }
+  
+  // Private method to get database URL
+  private getDatabaseUrl(env?: { DATABASE_URL?: string }): string {
+    const databaseUrl = env?.DATABASE_URL || process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      throw new Error("DATABASE_URL not configured. Please check your environment variables.");
+    }
+    
+    return databaseUrl;
+  }
 }
 
-// Health check for database
-export async function checkDatabaseHealth(): Promise<{
+// Global factory instance
+const dbFactory = DatabaseClientFactory.getInstance();
+
+// Convenience functions for backward compatibility
+export function getNeonClient(env?: { DATABASE_URL?: string }): Client {
+  return dbFactory.getClient(env);
+}
+
+export function createNeonClient(env?: { DATABASE_URL?: string }): Client {
+  return dbFactory.getClient(env);
+}
+
+export async function disconnectNeon(): Promise<void> {
+  // This function is kept for backward compatibility but doesn't do much
+  // since we're creating new clients per operation
+  logger.info("disconnectNeon called - no action needed with new architecture");
+}
+
+// Health check for database - accepts env parameter for Cloudflare Workers
+export async function checkDatabaseHealth(env?: { DATABASE_URL?: string }): Promise<{
   status: "healthy" | "unhealthy";
   message: string;
   responseTime: number;
@@ -60,13 +89,21 @@ export async function checkDatabaseHealth(): Promise<{
   const startTime = Date.now();
   
   try {
-    // Create a new client for health check (don't reuse)
-    const client = new Client(process.env.DATABASE_URL!);
-    await client.connect();
+    console.log("🏥 Starting database health check");
+    console.log("Environment keys:", env ? Object.keys(env) : "none");
+    
+    // Get a fresh client for health check
+    const client = dbFactory.getClientForHealthCheck(env);
     
     try {
+      console.log("🔗 Connecting to database...");
+      await client.connect();
+      console.log("✅ Database connected successfully");
+      
       const { rows } = await client.query('SELECT 1 as health_check');
       const responseTime = Date.now() - startTime;
+      
+      console.log("✅ Health check query successful");
       
       return {
         status: "healthy",
@@ -74,10 +111,13 @@ export async function checkDatabaseHealth(): Promise<{
         responseTime,
       };
     } finally {
-      await client.end();
+      console.log("🔌 Closing database client...");
+      await dbFactory.closeClient(client);
     }
   } catch (error) {
     const responseTime = Date.now() - startTime;
+    
+    console.error("❌ Database health check failed:", error);
     
     logger.error("Database health check failed", {
       error: error instanceof Error ? error : new Error(String(error)),
@@ -96,14 +136,12 @@ export async function checkDatabaseHealth(): Promise<{
 export function setupGracefulShutdown(): void {
   // Handle SIGINT (Ctrl+C) and SIGTERM
   process.on('SIGINT', async () => {
-    logger.info('Received SIGINT, shutting down database gracefully...');
-    await disconnectNeon();
+    logger.info('Received SIGINT, shutting down gracefully...');
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
-    logger.info('Received SIGTERM, shutting down database gracefully...');
-    await disconnectNeon();
+    logger.info('Received SIGTERM, shutting down gracefully...');
     process.exit(0);
   });
 
@@ -115,9 +153,9 @@ export function setupGracefulShutdown(): void {
   // Handle beforeExit
   process.on('beforeExit', async (code) => {
     logger.info(`Process beforeExit with code: ${code}`);
-    await disconnectNeon();
   });
 }
 
-// Export types for use in other modules
+// Export types and factory for use in other modules
 export type { Client } from '@neondatabase/serverless';
+export { dbFactory };
