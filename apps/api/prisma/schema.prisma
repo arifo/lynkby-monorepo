@@ -1,4 +1,4 @@
-// Minimal starter schema — expand later
+// Prisma Data Proxy compatible schema for Cloudflare Workers
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -7,6 +7,8 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  // Enable Data Proxy for edge compatibility
+  previewFeatures = ["driverAdapters"]
 }
 
 model User {
@@ -16,27 +18,33 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   page      Page?
+  
+  @@map("User")
 }
 
 model Page {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   @unique
   displayName String
-  bio       String?
-  avatarUrl String?
-  links     Link[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  bio         String?
+  avatarUrl   String?
+  links       Link[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("Page")
 }
 
 model Link {
   id        String   @id @default(cuid())
-  page      Page     @relation(fields: [pageId], references: [id])
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   pageId    String
   label     String
   url       String
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@map("Link")
 }

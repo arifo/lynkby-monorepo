@@ -3,18 +3,44 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --local --config wrangler.toml --port 8787",
+    "dev": "wrangler dev src/workers/index.ts --local --config wrangler.toml --port 8787",
     "build": "tsc -p tsconfig.json",
     "deploy": "pnpm build && wrangler deploy --config wrangler.toml",
     "deploy:dev": "pnpm build && wrangler deploy --config wrangler.toml --env development",
-    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production"
+    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:reset": "prisma migrate reset --force",
+    "db:status": "prisma migrate status",
+    "db:studio": "prisma studio",
+    "db:migrate:dev": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts",
+    "db:migrate:generate": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts generate",
+    "db:migrate:deploy": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts migrate",
+    "db:migrate:push": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts push",
+    "db:migrate:reset": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts reset",
+    "db:migrate:status": "tsx --tsconfig scripts/tsconfig.json scripts/migrate.ts status"
   },
   "dependencies": {
     "@lynkby/shared": "workspace:*",
-    "hono": "^4.5.7"
+    "@neondatabase/serverless": "^1.0.1",
+    "@prisma/client": "6.14.0",
+    "@prisma/extension-accelerate": "^2.0.2",
+    "@sentry/cloudflare": "^10.8.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.3.0",
+    "cookie": "^1.0.2",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.1",
+    "hono": "^4.5.7",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250115.0",
+    "@types/jsonwebtoken": "^9.0.6",
+    "prisma": "6.14.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.5.4",
     "wrangler": "^4.32.0"
   }

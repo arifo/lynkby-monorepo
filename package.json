@@ -25,17 +25,13 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "clean": "pnpm -r exec -- rm -rf .next .open-next dist node_modules/.cache",
     "install:all": "pnpm install",
-    "prisma:generate": "pnpm --filter @lynkby/app prisma:generate",
-    "prisma:migrate": "pnpm --filter @lynkby/app prisma:migrate",
-    "prisma:studio": "pnpm --filter @lynkby/app prisma:studio",
-    "prisma:seed": "pnpm --filter @lynkby/app prisma:seed"
+    "db:generate": "pnpm --filter @lynkby/api db:generate",
+    "db:migrate": "pnpm --filter @lynkby/api db:migrate",
+    "db:studio": "pnpm --filter @lynkby/api db:studio",
+    "db:status": "pnpm --filter @lynkby/api db:status"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
-    "prisma": "6.14.0",
     "typescript": "^5.5.4"
-  },
-  "dependencies": {
-    "@prisma/client": "6.14.0"
   }
 }
