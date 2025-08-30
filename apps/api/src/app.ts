@@ -8,7 +8,7 @@ import mainRouter from "./routes";
 
 export function createApp(env: unknown): Hono<{ Bindings: AppEnv }> {
   const app = new Hono<{ Bindings: AppEnv }>();
-  const parsedEnv = parseEnv(env); // Parse and validate environment
+  const parsedEnv = parseEnv(env);
   
   // Global middleware
   app.use("*", logger());

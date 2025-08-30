@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/cloudflare";
-
 export interface LogContext {
   requestId?: string;
   userId?: string;
@@ -19,33 +17,12 @@ export interface LogLevel {
   error?: Error;
 }
 
-// Sentry configuration constants
-const SENTRY_CONFIG = {
-  ENABLED: true,
-  ENVIRONMENT: typeof process !== 'undefined' ? process.env.NODE_ENV || 'development' : 'development',
-  TRACES_SAMPLE_RATE: 0.1,
-  PROFILES_SAMPLE_RATE: 0.1,
-} as const;
-
 class Logger {
   private requestId: string | null = null;
   private context: LogContext = {};
 
   constructor() {
-    this.initializeSentry();
-  }
-
-  // Initialize Sentry if enabled
-  private initializeSentry(): void {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        // Note: Sentry.init is typically called at the application level
-        // This is just a placeholder for configuration
-        console.log('Sentry integration enabled');
-      } catch (error) {
-        console.warn('Failed to initialize Sentry:', error);
-      }
-    }
+    // No Sentry initialization needed - using Cloudflare console
   }
 
   // Set request context for this request
@@ -64,7 +41,7 @@ class Logger {
     this.context.requestId = requestId;
   }
 
-  // Log with structured format
+  // Log with structured format to Cloudflare console
   private log(level: LogLevel['level'], message: string, data?: Record<string, unknown>, error?: Error): void {
     const timestamp = new Date().toISOString();
     const logEntry: LogLevel = {
@@ -78,7 +55,7 @@ class Logger {
     // Format for console output
     const consoleMessage = this.formatConsoleMessage(timestamp, logEntry);
     
-    // Output to console with appropriate level
+    // Output to Cloudflare console with appropriate level
     switch (level) {
       case 'debug':
         console.debug(consoleMessage);
@@ -92,67 +69,6 @@ class Logger {
       case 'error':
         console.error(consoleMessage);
         break;
-    }
-
-    // Send to Sentry for external logging
-    this.sendToSentry(logEntry);
-  }
-
-  // Send log entry to Sentry
-  private sendToSentry(logEntry: LogLevel): void {
-    if (!SENTRY_CONFIG.ENABLED || typeof Sentry === 'undefined') {
-      return;
-    }
-
-    try {
-      const { level, message, context, data, error } = logEntry;
-
-      // Set user context if available
-      if (context?.userId) {
-        Sentry.setUser({
-          id: context.userId,
-          username: context.username,
-        });
-      }
-
-      // Set additional context
-      if (context) {
-        Sentry.setContext('request', {
-          requestId: context.requestId,
-          method: context.method,
-          path: context.path,
-          ip: context.ip,
-          userAgent: context.userAgent,
-          duration: context.duration,
-        });
-      }
-
-      // Set extra data
-      if (data && Object.keys(data).length > 0) {
-        Sentry.setContext('data', data);
-      }
-
-      // Handle different log levels
-      switch (level) {
-        case 'error':
-          if (error) {
-            Sentry.captureException(error);
-          } else {
-            Sentry.captureMessage(message, 'error');
-          }
-          break;
-        case 'warn':
-          Sentry.captureMessage(message, 'warning');
-          break;
-        case 'info':
-          Sentry.captureMessage(message, 'info');
-          break;
-        case 'debug':
-          // Debug messages are typically not sent to Sentry
-          break;
-      }
-    } catch (sentryError) {
-      console.warn('Failed to send log to Sentry:', sentryError);
     }
   }
 
@@ -248,63 +164,14 @@ class Logger {
     this.log(level, `External Service: ${service} ${operation}`, { service, operation, duration, success });
   }
 
-  // Sentry-specific methods
-  setSentryUser(userId: string, username?: string, email?: string): void {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        Sentry.setUser({
-          id: userId,
-          username,
-          email,
-        });
-      } catch (error) {
-        console.warn('Failed to set Sentry user:', error);
-      }
-    }
-  }
-
-  setSentryTag(key: string, value: string): void {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        Sentry.setTag(key, value);
-      } catch (error) {
-        console.warn('Failed to set Sentry tag:', error);
-      }
-    }
-  }
-
-  setSentryContext(name: string, context: Record<string, unknown>): void {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        Sentry.setContext(name, context);
-      } catch (error) {
-        console.warn('Failed to set Sentry context:', error);
-      }
-    }
-  }
-
-  // Capture performance metrics
+  // Performance metrics (using Cloudflare console)
   capturePerformanceMetric(name: string, value: number, unit: string = 'ms'): void {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        // Note: Sentry metrics API may vary by version
-        // This is a placeholder for performance tracking
-        console.log(`Performance metric: ${name} = ${value}${unit}`);
-      } catch (error) {
-        console.warn('Failed to capture performance metric:', error);
-      }
-    }
+    console.log(`Performance metric: ${name} = ${value}${unit}`);
   }
 
-  // Flush Sentry events (useful for serverless environments)
-  async flushSentry(): Promise<void> {
-    if (SENTRY_CONFIG.ENABLED && typeof Sentry !== 'undefined') {
-      try {
-        await Sentry.flush(2000); // Wait up to 2 seconds
-      } catch (error) {
-        console.warn('Failed to flush Sentry:', error);
-      }
-    }
+  // Flush logs (no-op for Cloudflare console)
+  async flushLogs(): Promise<void> {
+    // Cloudflare console handles flushing automatically
   }
 }
 
@@ -323,9 +190,6 @@ export const {
   logAPI, 
   logCache, 
   logExternalService,
-  setSentryUser,
-  setSentryTag,
-  setSentryContext,
   capturePerformanceMetric,
-  flushSentry
+  flushLogs
 } = logger;

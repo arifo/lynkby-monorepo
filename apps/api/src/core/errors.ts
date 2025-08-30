@@ -1,4 +1,4 @@
-import { captureError, captureMessage } from "./sentry";
+import { captureError } from "./sentry";
 
 export class AppError extends Error {
   constructor(
@@ -71,9 +71,21 @@ export const createError = {
 
 // Error handler for Hono
 export const errorHandler = (err: Error, c: any) => {
+  // Log to Cloudflare console first
   console.error("API Error:", err);
   
   if (err instanceof AppError) {
+    // Only send critical errors to Sentry
+    if (err.statusCode >= 500) {
+      captureError(err, {
+        statusCode: err.statusCode,
+        code: err.code,
+        details: err.details,
+        path: c.req.path,
+        method: c.req.method,
+      });
+    }
+    
     return c.json({
       error: {
         code: err.code,
@@ -86,6 +98,7 @@ export const errorHandler = (err: Error, c: any) => {
   
   // Handle Zod validation errors
   if (err.name === "ZodError") {
+    console.error("Validation Error:", err.message);
     return c.json({
       error: {
         code: ErrorCodes.VALIDATION_ERROR,
@@ -96,7 +109,13 @@ export const errorHandler = (err: Error, c: any) => {
     }, 400);
   }
   
-  // Default error response
+  // Default error response - always capture internal errors
+  captureError(err, {
+    path: c.req.path,
+    method: c.req.method,
+    context: "unhandled_error",
+  });
+  
   return c.json({
     error: {
       code: ErrorCodes.INTERNAL_ERROR,

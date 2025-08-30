@@ -32,7 +32,7 @@ print_info() {
 }
 
 # Check if we're in the right directory
-if [ ! -f "package.json" ] || [ ! -f "wrangler.toml" ]; then
+if [ ! -f "package.json" ]; then
     print_error "Please run this script from the apps/api directory"
     exit 1
 fi

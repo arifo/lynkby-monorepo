@@ -37,34 +37,38 @@ export function createSentryConfig(env: AppEnv) {
     };
   }
 
-  console.log("Initializing Sentry with DSN:", SecurityUtils.maskSecret(env.SENTRY_DSN, "url"));
+  // Only log on first initialization to reduce noise
+  if (!(globalThis as any).__SENTRY_INITIALIZED__) {
+    console.log("Initializing Sentry for error tracking only");
+    (globalThis as any).__SENTRY_INITIALIZED__ = true;
+  }
+  
   const { id: versionId } = env.CF_VERSION_METADATA || { id: "unknown" };
 
   return {
     dsn: env.SENTRY_DSN,
     release: versionId,
     
-    // Enable performance monitoring
-    tracesSampleRate: SENTRY_CONFIG.TRACES_SAMPLE_RATE,
-    profilesSampleRate: SENTRY_CONFIG.PROFILES_SAMPLE_RATE,
+    // Minimal performance monitoring
+    tracesSampleRate: 0.01, // Only 1% for critical errors
+    profilesSampleRate: 0, // Disable profiles
     
-    // Enable logs
-    enableLogs: true,
-    integrations: [
-      // send console.log, console.warn, and console.error calls as logs to Sentry
-      Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
-    ],
+    // Disable console logging - let Cloudflare handle it
+    enableLogs: false,
     
-    // Add request headers and IP for users
-    sendDefaultPii: true,
+    // No integrations - just pure error tracking
+    integrations: [],
+    
+    // Minimal context
+    sendDefaultPii: false,
     
     // Environment
     environment: env.NODE_ENV || "development",
     
-    // Debug mode for development
-    debug: env.NODE_ENV === "development",
+    // Always disable debug mode
+    debug: false,
     
-    // Add context about the worker
+    // Minimal tags
     initialScope: {
       tags: {
         worker: "lynkby-api",
@@ -95,10 +99,16 @@ export const captureError = (error: Error, context?: Record<string, any>) => {
   }
 };
 
-// Utility function to capture messages
-export const captureMessage = (message: string, level: Sentry.SeverityLevel = "info", context?: Record<string, any>) => {
-  if (!SENTRY_CONFIG.ENABLED) {
+// Utility function to capture messages (only for errors)
+export const captureMessage = (message: string, level: Sentry.SeverityLevel = "error", context?: Record<string, any>) => {
+  // Only capture error and fatal messages
+  if (level !== "error" && level !== "fatal") {
     console.log(`[${level.toUpperCase()}] ${message}`, context);
+    return;
+  }
+
+  if (!SENTRY_CONFIG.ENABLED) {
+    console.error("Sentry disabled, error logged to console:", message, context);
     return;
   }
 
@@ -113,11 +123,11 @@ export const captureMessage = (message: string, level: Sentry.SeverityLevel = "i
     });
   } catch (sentryError) {
     console.error("Failed to send message to Sentry:", sentryError);
-    console.log(`[${level.toUpperCase()}] ${message}`, context);
+    console.error(`[${level.toUpperCase()}] ${message}`, context);
   }
 };
 
-// Utility function to add breadcrumbs
+// Utility function to add breadcrumbs (minimal)
 export const addBreadcrumb = (message: string, category: string, data?: Record<string, any>) => {
   if (!SENTRY_CONFIG.ENABLED) {
     return;
@@ -132,13 +142,12 @@ export const addBreadcrumb = (message: string, category: string, data?: Record<s
       timestamp: Date.now() / 1000,
     });
   } catch (sentryError) {
-    console.error("Failed to add breadcrumb to Sentry:", sentryError);
+    // Silently fail - breadcrumbs are not critical
   }
 };
 
 // Export Sentry instance for direct use if needed
 export { Sentry };
 
-// Note: For Cloudflare Workers, Sentry should be initialized using the withSentry wrapper
-// in the main worker file, not through Sentry.init() in a separate module.
-// See the updated workers/index.ts for the correct implementation.
+// Note: Sentry is now configured for error tracking only.
+// All other logging should use Cloudflare's console for better performance.

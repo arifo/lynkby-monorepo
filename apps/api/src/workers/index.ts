@@ -30,5 +30,5 @@ const worker = {
   },
 };
 
-// Wrap the worker with Sentry for error monitoring and tracing
+// Export the worker with optimized Sentry wrapper
 export default Sentry.withSentry(createSentryConfig, worker);
