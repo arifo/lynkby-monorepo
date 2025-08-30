@@ -44,6 +44,7 @@ export async function disconnectNeon(): Promise<void> {
     try {
       await neonClient.end();
       neonClient = null;
+      logger.info("Neon client disconnected successfully");
     } catch (error) {
       logger.error("Error disconnecting Neon client", { error });
     }
@@ -89,6 +90,33 @@ export async function checkDatabaseHealth(): Promise<{
       responseTime,
     };
   }
+}
+
+// Setup graceful shutdown handlers
+export function setupGracefulShutdown(): void {
+  // Handle SIGINT (Ctrl+C) and SIGTERM
+  process.on('SIGINT', async () => {
+    logger.info('Received SIGINT, shutting down database gracefully...');
+    await disconnectNeon();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    logger.info('Received SIGTERM, shutting down database gracefully...');
+    await disconnectNeon();
+    process.exit(0);
+  });
+
+  // Handle process exit
+  process.on('exit', (code) => {
+    logger.info(`Process exiting with code: ${code}`);
+  });
+
+  // Handle beforeExit
+  process.on('beforeExit', async (code) => {
+    logger.info(`Process beforeExit with code: ${code}`);
+    await disconnectNeon();
+  });
 }
 
 // Export types for use in other modules

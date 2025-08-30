@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev src/workers/index.ts --local --config wrangler.toml --port 8787",
+    "dev:graceful": "wrangler dev src/workers/index.ts --local --config wrangler.toml --port 8787 --graceful-shutdown",
     "build": "tsc -p tsconfig.json",
     "deploy": "pnpm build && wrangler deploy --config wrangler.toml",
     "deploy:dev": "pnpm build && wrangler deploy --config wrangler.toml --env development",

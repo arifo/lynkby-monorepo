@@ -3,6 +3,7 @@ import { databaseService } from "../core/repositories";
 import { UserRepository, PageRepository } from "../core/repositories";
 import { logger } from "../core/util/logger";
 import { createError } from "../core/errors";
+import { captureError, captureMessage, addBreadcrumb } from "../core/sentry";
 
 const healthRouter = new Hono();
 
@@ -32,6 +33,117 @@ healthRouter.get("/_health", async (c) => {
         error: error instanceof Error ? error.message : "Unknown error",
       },
       503
+    );
+  }
+});
+
+// Debug Sentry integration endpoint
+healthRouter.get("/debug-sentry", async (c) => {
+  try {
+    const testType = c.req.query("type") || "all";
+    
+    // Add breadcrumb for tracking
+    addBreadcrumb("Debug Sentry Test", "test", { testType, timestamp: new Date().toISOString() });
+    
+    const results = [];
+    
+    // Test 1: Capture info message
+    if (testType === "all" || testType === "info") {
+      captureMessage("Debug test: Info message", "info", {
+        testType: "info",
+        endpoint: "/debug-sentry",
+        timestamp: new Date().toISOString(),
+      });
+      results.push("Info message sent to Sentry");
+    }
+    
+    // Test 2: Capture warning message
+    if (testType === "all" || testType === "warning") {
+      captureMessage("Debug test: Warning message", "warning", {
+        testType: "warning",
+        endpoint: "/debug-sentry",
+        timestamp: new Date().toISOString(),
+      });
+      results.push("Warning message sent to Sentry");
+    }
+    
+    // Test 3: Capture error
+    if (testType === "all" || testType === "error") {
+      const testError = new Error("Debug test: This is a test error for Sentry integration");
+      testError.name = "DebugTestError";
+      
+      captureError(testError, {
+        testType: "error",
+        endpoint: "/debug-sentry",
+        timestamp: new Date().toISOString(),
+        additionalContext: "This error was intentionally generated for testing Sentry integration",
+      });
+      results.push("Error captured and sent to Sentry");
+    }
+    
+    // Test 4: Capture exception with context
+    if (testType === "all" || testType === "exception") {
+      try {
+        // Intentionally throw an error
+        throw new Error("Debug test: Intentional exception for Sentry testing");
+      } catch (error) {
+        captureError(error instanceof Error ? error : new Error(String(error)), {
+          testType: "exception",
+          endpoint: "/debug-sentry",
+          timestamp: new Date().toISOString(),
+          context: "Exception handling test",
+        });
+        results.push("Exception captured and sent to Sentry");
+      }
+    }
+    
+    // Test 5: Performance tracking (if available)
+    if (testType === "all" || testType === "performance") {
+      const startTime = Date.now();
+      
+      // Simulate some work
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const duration = Date.now() - startTime;
+      
+      addBreadcrumb("Performance Test", "performance", {
+        duration: `${duration}ms`,
+        testType: "performance",
+        timestamp: new Date().toISOString(),
+      });
+      
+      results.push(`Performance test completed in ${duration}ms`);
+    }
+    
+    logger.info("Sentry debug test completed", { testType, results });
+    
+    return c.json({
+      success: true,
+      message: "Sentry debug test completed",
+      testType,
+      results,
+      timestamp: new Date().toISOString(),
+      note: "Check your Sentry dashboard to see if these events were captured",
+    });
+    
+  } catch (error) {
+    logger.error("Sentry debug test failed", { error });
+    
+    // Capture this error too
+    captureError(error instanceof Error ? error : new Error(String(error)), {
+      testType: "debug_test_failure",
+      endpoint: "/debug-sentry",
+      timestamp: new Date().toISOString(),
+    });
+    
+    return c.json(
+      {
+        success: false,
+        message: "Sentry debug test failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      },
+      500
     );
   }
 });

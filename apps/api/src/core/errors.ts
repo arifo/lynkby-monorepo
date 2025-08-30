@@ -1,3 +1,5 @@
+import { captureError, captureMessage } from "./sentry";
+
 export class AppError extends Error {
   constructor(
     public statusCode: number,

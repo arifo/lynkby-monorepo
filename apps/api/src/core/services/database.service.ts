@@ -10,18 +10,59 @@ export interface IDatabaseService {
   executeWithRetry<T>(operation: () => Promise<T>, operationName: string): Promise<T>;
   query<T = any>(sql: string, params?: any[]): Promise<T[]>;
   execute(sql: string, params?: any[]): Promise<void>;
+  shutdown(): Promise<void>;
 }
 
 // Database service implementation
 export class DatabaseService implements IDatabaseService {
   private isHealthy: boolean = true;
+  private isShuttingDown: boolean = false;
 
   constructor() {
     // Don't store client instance - create new one for each operation
+    this.setupGracefulShutdown();
+  }
+
+  // Setup graceful shutdown handlers
+  private setupGracefulShutdown(): void {
+    // Handle SIGINT (Ctrl+C) and SIGTERM
+    process.on('SIGINT', async () => {
+      logger.info('Received SIGINT, shutting down gracefully...');
+      await this.shutdown();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      logger.info('Received SIGTERM, shutting down gracefully...');
+      await this.shutdown();
+      process.exit(0);
+    });
+
+    // Handle uncaught exceptions
+    process.on('uncaughtException', async (error) => {
+      logger.error('Uncaught exception, shutting down gracefully...', { error });
+      await this.shutdown();
+      process.exit(1);
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', async (reason, promise) => {
+      logger.error('Unhandled promise rejection, shutting down gracefully...', { reason, promise });
+      await this.shutdown();
+      process.exit(1);
+    });
   }
 
   // Health check with caching
   async healthCheck(): Promise<{ status: string; message: string; responseTime: number }> {
+    if (this.isShuttingDown) {
+      return {
+        status: "unhealthy",
+        message: "Service is shutting down",
+        responseTime: 0,
+      };
+    }
+
     try {
       const health = await checkDatabaseHealth();
       this.isHealthy = health.status === "healthy";
@@ -40,6 +81,10 @@ export class DatabaseService implements IDatabaseService {
     operation: () => Promise<T>, 
     operationName: string
   ): Promise<T> {
+    if (this.isShuttingDown) {
+      throw new Error("Service is shutting down");
+    }
+
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= DB_CONFIG.MAX_RETRIES; attempt++) {
@@ -128,6 +173,24 @@ export class DatabaseService implements IDatabaseService {
     );
   }
 
+  // Graceful shutdown
+  async shutdown(): Promise<void> {
+    if (this.isShuttingDown) {
+      return;
+    }
+
+    this.isShuttingDown = true;
+    logger.info('Database service shutting down...');
+
+    try {
+      // Wait a bit for any ongoing operations to complete
+      await this.delay(100);
+      logger.info('Database service shutdown complete');
+    } catch (error) {
+      logger.error('Error during database service shutdown', { error });
+    }
+  }
+
   // Check if error should not be retried
   private shouldNotRetry(error: Error): boolean {
     // Don't retry syntax errors or authentication errors
@@ -147,7 +210,12 @@ export class DatabaseService implements IDatabaseService {
 
   // Check if database is healthy
   getHealthStatus(): boolean {
-    return this.isHealthy;
+    return this.isHealthy && !this.isShuttingDown;
+  }
+
+  // Check if service is shutting down
+  isShutdownInProgress(): boolean {
+    return this.isShuttingDown;
   }
 }
 
