@@ -1,25 +1,30 @@
-// Prisma Data Proxy compatible schema for Cloudflare Workers
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
-  // Enable Data Proxy for edge compatibility
-  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
+  email     String   @unique @db.VarChar(255)
+  username  String?  @unique @db.VarChar(50)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  page      Page?
+  lastLoginAt DateTime?
+  isVerified Boolean @default(false)
   
-  @@map("User")
+  // Relations
+  magicLinkTokens MagicLinkToken[]
+  sessions        UserSession[]
+  page            Page?
+  
+  @@map("users")
 }
 
 model Page {
@@ -33,7 +38,7 @@ model Page {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  @@map("Page")
+  @@map("pages")
 }
 
 model Link {
@@ -46,5 +51,39 @@ model Link {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@map("Link")
+  @@map("links")
+}
+
+model MagicLinkToken {
+  id        String   @id @default(cuid())
+  email     String   @db.VarChar(255)
+  tokenHash String   @unique // Store only hashed tokens
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  usedAt    DateTime? // Track when token was consumed
+  ipCreatedFrom String? // IP address where token was created
+  uaCreatedFrom String? // User agent where token was created
+  redirectPath String? // Where to redirect after verification
+  
+  // Relations
+  user      User     @relation(fields: [email], references: [email], onDelete: Cascade)
+  
+  @@map("magic_link_tokens")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique // Store only hashed tokens
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  revokedAt DateTime? // Track session revocation
+  ipAddress String? // IP address where session was created
+  userAgent String? // User agent where session was created
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_sessions")
 }

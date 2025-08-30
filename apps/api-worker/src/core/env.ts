@@ -17,6 +17,12 @@ const EnvSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   TIKTOK_CLIENT_KEY: z.string().optional(),
   TIKTOK_CLIENT_SECRET: z.string().optional(),
+  
+  // Email provider (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional(),
+  SUPPORT_EMAIL: z.string().email().optional(),
+  APP_NAME: z.string().optional(),
 });
 
 export type EnvVars = z.infer<typeof EnvSchema>;

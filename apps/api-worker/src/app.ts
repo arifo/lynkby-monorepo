@@ -16,7 +16,12 @@ export function createApp(env: unknown): Hono<{ Bindings: AppEnv }> {
   app.use("*", logger());
   app.use("*", secureHeaders());
   app.use("*", cors({
-    origin: ["https://app.lynkby.com", "https://app-dev.lynkby.com", "http://localhost:3000"],
+    origin: [
+      "https://app.lynkby.com", 
+      "https://app-dev.lynkby.com", 
+      "http://localhost:3000",
+      "http://localhost:3001" // Add dashboard port
+    ],
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

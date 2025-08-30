@@ -1,11 +1,21 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { JWT_CONFIG } from "../env";
 
 // JWT payload interface
 export interface JWTPayload {
   userId: string;
   email: string;
-  username: string;
+  username?: string;
+  iat?: number;
+  exp?: number;
+}
+
+// Magic link token payload interface
+export interface MagicLinkPayload {
+  email: string;
+  tokenId: string;
+  type: 'magic_link';
   iat?: number;
   exp?: number;
 }
@@ -32,6 +42,28 @@ export const tokenUtils = {
       expiresIn: JWT_CONFIG.REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"]
     });
   },
+
+  // Generate magic link token
+  generateMagicLinkToken: (
+    payload: Omit<MagicLinkPayload, "iat" | "exp">,
+    secret: string,
+    expiresIn: string = "15m" // 15 minutes
+  ): string => {
+    return jwt.sign(payload, secret, { 
+      expiresIn: expiresIn as jwt.SignOptions["expiresIn"]
+    });
+  },
+
+  // Generate session token
+  generateSessionToken: (
+    payload: Omit<JWTPayload, "iat" | "exp">,
+    secret: string,
+    expiresIn: string = "30d" // 30 days
+  ): string => {
+    return jwt.sign(payload, secret, { 
+      expiresIn: expiresIn as jwt.SignOptions["expiresIn"]
+    });
+  },
   
   // Verify and decode token
   verifyToken: (token: string, secret: string): JWTPayload => {
@@ -40,6 +72,16 @@ export const tokenUtils = {
       return decoded;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : "Invalid token");
+    }
+  },
+
+  // Verify magic link token
+  verifyMagicLinkToken: (token: string, secret: string): MagicLinkPayload => {
+    try {
+      const decoded = jwt.verify(token, secret) as MagicLinkPayload;
+      return decoded;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Invalid magic link token");
     }
   },
 
@@ -92,5 +134,15 @@ export const tokenUtils = {
     } catch {
       return true;
     }
+  },
+
+  // Hash a token for secure storage
+  hashToken: (token: string): string => {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  },
+
+  // Generate a secure random token
+  generateSecureToken: (length: number = 32): string => {
+    return crypto.randomBytes(length / 2).toString('hex');
   },
 } as const;
