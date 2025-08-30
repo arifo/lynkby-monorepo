@@ -1,0 +1,61 @@
+# Lynkby API Wrangler Configuration Template
+# Copy this file to wrangler.toml and fill in your actual values
+# NEVER commit actual secrets to version control!
+
+name = "lynkby-api"
+main = "src/workers/index.ts"
+compatibility_date = "2024-01-15"
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# R2 Buckets
+[[r2_buckets]]
+binding = "R2_ASSETS"
+bucket_name = "lynkby-assets"
+
+# Queues
+[[queues]]
+binding = "QUEUE_TIKTOK_SYNC"
+name = "tiktok-sync"
+
+# Development Environment
+[env.development]
+name = "lynkby-api-dev"
+
+# Environment variables for development
+[env.development.vars]
+NODE_ENV = "development"
+# JWT_SECRET = "your-dev-jwt-secret-here"
+# SENTRY_DSN = "https://your-dev-sentry-dsn@sentry.io/project-id"
+# DATABASE_URL = "https://your-dev-database-url"
+# DIRECT_URL = "https://your-dev-direct-url"
+# STRIPE_SECRET_KEY = "sk_test_your_stripe_test_key"
+
+# Production Environment
+[env.production]
+name = "lynkby-api-prod"
+
+# Environment variables for production
+[env.production.vars]
+NODE_ENV = "production"
+# JWT_SECRET = "your-production-jwt-secret-here"
+# SENTRY_DSN = "https://your-production-sentry-dsn@sentry.io/project-id"
+# DATABASE_URL = "https://your-production-database-url"
+# DIRECT_URL = "https://your-production-direct-url"
+# STRIPE_SECRET_KEY = "sk_live_your_stripe_live_key"
+
+# Cron triggers
+[triggers]
+crons = ["0 */6 * * *"] # Every 6 hours
+
+# Queue consumers
+[[queues.consumers]]
+queue = "tiktok-sync"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "tiktok-sync-dlq"

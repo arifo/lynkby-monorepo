@@ -68,3 +68,81 @@ export const DB_CONFIG = {
   QUERY_TIMEOUT: 30000, // 30 seconds
   CONNECTION_POOL_SIZE: 5,
 } as const;
+
+// Security utilities for sensitive data
+export const SecurityUtils = {
+  // Mask sensitive values in logs
+  maskSecret: (value: string, type: "url" | "key" | "secret" = "secret"): string => {
+    if (!value) return "undefined";
+    
+    switch (type) {
+      case "url":
+        try {
+          const url = new URL(value);
+          return `${url.protocol}//***@${url.hostname}${url.pathname}`;
+        } catch {
+          return "***";
+        }
+      case "key":
+        if (value.startsWith("sk_") || value.startsWith("pk_")) {
+          return `${value.substring(0, 7)}...${value.substring(value.length - 4)}`;
+        }
+        return value.length > 8 ? `${value.substring(0, 4)}...${value.substring(value.length - 4)}` : "***";
+      case "secret":
+      default:
+        return value.length > 8 ? `${value.substring(0, 4)}...${value.substring(value.length - 4)}` : "***";
+    }
+  },
+
+  // Validate and load environment variables securely
+  loadEnvSecurely: (env: Record<string, string | undefined>): EnvVars => {
+    try {
+      const envVars = EnvSchema.parse(env);
+      
+      // Log configuration status (without exposing sensitive data)
+      console.log("🔐 Environment loaded successfully");
+      console.log(`   Environment: ${envVars.NODE_ENV}`);
+      console.log(`   Database: ${envVars.DATABASE_URL ? "✅ Configured" : "❌ Missing"}`);
+      console.log(`   JWT: ${envVars.JWT_SECRET ? "✅ Configured" : "❌ Missing"}`);
+      console.log(`   Sentry: ${envVars.SENTRY_DSN ? "✅ Configured" : "❌ Missing"}`);
+      console.log(`   Stripe: ${envVars.STRIPE_SECRET_KEY ? "✅ Configured" : "❌ Missing"}`);
+      console.log(`   TikTok: ${envVars.TIKTOK_CLIENT_KEY ? "✅ Configured" : "❌ Missing"}`);
+      
+      return envVars;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error("❌ Environment validation failed:");
+        error.errors.forEach((err) => {
+          console.error(`   ${err.path.join(".")}: ${err.message}`);
+        });
+      }
+      throw new Error("Failed to load environment variables. Check configuration.");
+    }
+  },
+
+  // Get environment variables for Cloudflare Workers
+  getWorkerEnv: (env: any): EnvVars => {
+    return SecurityUtils.loadEnvSecurely({
+      NODE_ENV: env.NODE_ENV,
+      APP_API_BASE: env.APP_API_BASE,
+      REVALIDATE_SECRET: env.REVALIDATE_SECRET,
+      JWT_SECRET: env.JWT_SECRET,
+      JWT_EXPIRES_IN: env.JWT_EXPIRES_IN,
+      SENTRY_DSN: env.SENTRY_DSN,
+      DATABASE_URL: env.DATABASE_URL,
+      DIRECT_URL: env.DIRECT_URL,
+      STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET,
+      TIKTOK_CLIENT_KEY: env.TIKTOK_CLIENT_KEY,
+      TIKTOK_CLIENT_SECRET: env.TIKTOK_CLIENT_SECRET,
+    });
+  },
+
+  // Get environment variables for Node.js (scripts, etc.)
+  getNodeEnv: (): EnvVars => {
+    return SecurityUtils.loadEnvSecurely(process.env);
+  },
+} as const;
+
+// Export the schema for external validation
+export { EnvSchema };
