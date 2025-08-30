@@ -1,0 +1,39 @@
+# Example Wrangler config for the Wildcard Worker
+# Copy to wrangler.toml and adjust values.
+
+name = "lynkby-worker"
+main = "src/index.ts"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Observsbility
+[observability.logs]
+enabled = true
+
+[env.production]
+name = "lynkby-worker"
+
+[env.production.vars]
+# Base URL for the API Worker used to fetch public profile data
+API_BASE = "https://api.lynkby.com"
+
+# Secret required by GET /_revalidate?username=...&secret=...
+# Dashboard uses this to purge a user’s cached HTML after publishing
+REVALIDATE_SECRET = "your-production-revalidate-secret-here"
+
+# Optional runtime hint
+NODE_ENV = "production"
+
+
+
+[env.development]
+name = "lynkby-worker-dev"
+
+[env.development.vars]
+# Local API Worker dev URL
+API_BASE = "http://localhost:8787"
+
+# Local revalidation secret (keep in sync with dashboard)
+REVALIDATE_SECRET = "dev-secret-change-me"
+NODE_ENV = "development"
+

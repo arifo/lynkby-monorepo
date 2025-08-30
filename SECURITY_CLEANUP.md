@@ -11,13 +11,13 @@
 1. **`.dev.vars` files** (containing environment variables)
    - `apps/api/.dev.vars`
    - `apps/app/.dev.vars`
-   - `apps/marketing/.dev.vars`
+   
    - `apps/web/.dev.vars`
 
 2. **`wrangler.toml` files** (containing hardcoded secrets)
    - `apps/api/wrangler.toml`
    - `apps/app/wrangler.toml`
-   - `apps/marketing/wrangler.toml`
+   
    - `apps/web/wrangler.toml`
 
 3. **`.env` files** (containing sensitive configuration)

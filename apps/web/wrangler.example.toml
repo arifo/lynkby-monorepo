@@ -1,0 +1,36 @@
+# Example Wrangler config for the Web app (static site)
+# Web is a Next.js static export deployed to Cloudflare Workers (serving static assets).
+
+name = "lynkby-web"
+main = "src/index.ts"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./out"
+binding = "ASSETS"
+
+# Observsbility
+[observability.logs]
+enabled = true
+
+[env.production]
+name = "lynkby-web"
+
+[env.production.vars]
+# Public URLs used at build/runtime (must start with NEXT_PUBLIC_ for Next.js)
+NEXT_PUBLIC_APP_API_BASE = "https://api.lynkby.com"       # Base to call API Worker from Web
+NEXT_PUBLIC_API_BASE = "https://api.lynkby.com"            # Alias, kept for compatibility
+NEXT_PUBLIC_APP_URL = "https://lynkby.com"                 # Public site canonical URL
+NEXT_PUBLIC_API_URL = "https://api.lynkby.com"             # API service URL for links
+NODE_ENV = "production"
+
+[env.development]
+name = "lynkby-web-dev"
+
+[env.development.vars]
+NEXT_PUBLIC_APP_API_BASE = "http://localhost:8787"          # API Worker dev
+NEXT_PUBLIC_API_BASE = "http://localhost:8787"
+NEXT_PUBLIC_APP_URL = "http://localhost:3000"
+NEXT_PUBLIC_API_URL = "http://localhost:8787"
+NODE_ENV = "development"

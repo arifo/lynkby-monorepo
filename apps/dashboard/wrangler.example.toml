@@ -1,0 +1,45 @@
+# Example Wrangler config for the Dashboard app
+# Copy to wrangler.toml and adapt values as needed.
+
+name = "lynkby-app"
+main = "src/index.ts"            # Only if deploying as a Worker
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Observsbility
+[observability.logs]
+enabled = true
+
+[env.production]
+name = "lynkby-app"
+
+[env.production.vars]
+# Runtime environment
+NODE_ENV = "production"
+APP_API_BASE = "https://api.lynkby.com"
+
+# Cache revalidation endpoint exposed by Wildcard Worker
+WORKER_REVALIDATE_URL = "https://api.lynkby.com/_revalidate"
+REVALIDATE_SECRET = "your-production-revalidate-secret-here"
+
+# If you run Pages with Functions or server code that needs database access,
+# you may also define (optional):
+# DATABASE_URL = "postgresql://user:pass@host:5432/db?sslmode=disable"
+# DIRECT_URL = "postgresql://user:pass@host:5432/db?sslmode=disable"
+
+
+
+[env.development]
+name = "lynkby-app-dev"
+
+[env.development.vars]
+APP_API_BASE = "http://localhost:8787"
+WORKER_REVALIDATE_URL = "http://localhost:8788/_revalidate"
+REVALIDATE_SECRET = "dev-secret-change-me"
+NODE_ENV = "development"
+
+# If you run Pages with Functions or server code that needs database access,
+# you may also define (optional):
+# DATABASE_URL = "postgresql://user:pass@host:5432/db?sslmode=disable"
+# DIRECT_URL = "postgresql://user:pass@host:5432/db?sslmode=disable"
+

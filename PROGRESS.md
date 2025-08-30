@@ -156,31 +156,9 @@ GET    /v1/webhooks/health   # Webhook health
 // Complete CRUD operations for all entities
 ```
 
-### 4. Marketing Website (`@lynkby/marketing`)
-**Status**: 🟢 Core Features Complete
-**Deployment**: `lynkby.com` (Cloudflare Workers)
-**Port**: 3002 (development)
-
-#### Features Implemented
-- ✅ Modern marketing homepage
-- ✅ Hero section with call-to-action
-- ✅ Feature highlights (Lightning Fast, TikTok Sync, Lowest Fees)
-- ✅ Responsive design with Tailwind CSS
-- ✅ Demo page integration
-- ✅ Professional footer with navigation
-
-#### Features Pending
-- 🔄 Additional marketing pages (Features, Pricing, About)
-- 🔄 Blog system
-- 🔄 Contact forms
-- 🔄 SEO optimization
-
-#### Current Implementation
-```typescript
-// Modern marketing site with Tailwind CSS
-// Responsive design and mobile optimization
-// Clear value proposition presentation
-```
+### 4. Marketing Website
+Consolidated into `apps/web` as the marketing site. The standalone
+`@lynkby/marketing` app has been removed.
 
 ## 🗄️ Database & Data Layer
 

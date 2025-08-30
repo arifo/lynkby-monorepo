@@ -1,13 +1,13 @@
 # Lynkby Deployment Guide
 
-This guide covers deploying the Lynkby platform to Cloudflare, including the main app, web app, API, and marketing site.
+This guide covers deploying the Lynkby platform to Cloudflare, including the dashboard, web app, and API.
 
 ## Architecture Overview
 
 - **App** (`@lynkby/app`): Main dashboard application deployed to Cloudflare Workers at `app.lynkby.com`
 - **Web** (`@lynkby/web`): Public-facing profile pages deployed to Cloudflare Workers at `*.lynkby.com/*`
 - **API** (`@lynkby/api`): Edge API handling data operations and caching at `api.lynkby.com`
-- **Marketing** (`@lynkby/marketing`): Marketing website deployed to Cloudflare Workers at `lynkby.com`
+
 
 ## Prerequisites
 
@@ -36,9 +36,7 @@ NODE_ENV=development
 APP_API_BASE=https://app.lynkby.com
 REVALIDATE_SECRET=dev-secret-change-me
 
-# apps/marketing/.dev.vars
-NODE_ENV=development
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
+
 ```
 
 ### 2. Start Development Servers
@@ -51,7 +49,7 @@ pnpm dev
 pnpm --filter @lynkby/app dev      # http://localhost:3001
 pnpm --filter @lynkby/web dev      # http://localhost:3000
 pnpm --filter @lynkby/api dev      # http://localhost:8787
-pnpm --filter @lynkby/marketing dev # http://localhost:3002
+
 ```
 
 ## Deployment
@@ -72,7 +70,7 @@ pnpm deploy:all
 pnpm deploy:app        # Deploy main app to app.lynkby.com
 pnpm deploy:web        # Deploy web app to *.lynkby.com/*
 pnpm deploy:api        # Deploy API to api.lynkby.com
-pnpm deploy:marketing  # Deploy marketing to lynkby.com
+
 ```
 
 ### 3. Deploy to Development
@@ -85,7 +83,7 @@ pnpm deploy:all:dev
 pnpm deploy:app:dev
 pnpm deploy:web:dev
 pnpm deploy:api:dev
-pnpm deploy:marketing:dev
+
 ```
 
 ## Route Configuration
@@ -95,14 +93,14 @@ pnpm deploy:marketing:dev
 - **App**: `app.lynkby.com/*` → Cloudflare Workers (`lynkby-app.arifento85.workers.dev`)
 - **Web**: `*.lynkby.com/*` → Cloudflare Workers (`lynkby-web.arifento85.workers.dev`)
 - **API**: `api.lynkby.com/*` → Cloudflare Workers (`lynkby-api.arifento85.workers.dev`)
-- **Marketing**: `lynkby.com/*` → Cloudflare Workers (`lynkby-marketing.arifento85.workers.dev`)
+
 
 ### Development Routes
 
 - **App**: `app-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-app-dev.arifento85.workers.dev`)
 - **Web**: `*.lynkby.com/*` → Cloudflare Workers (`lynkby-web-dev.arifento85.workers.dev`)
 - **API**: `api-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-api-dev.arifento85.workers.dev`)
-- **Marketing**: `marketing-dev.lynkby.com/*` → Cloudflare Workers (`lynkby-marketing-dev.arifento85.workers.dev`)
+
 
 ## Performance Strategy
 
@@ -249,5 +247,4 @@ pnpm --filter @lynkby/api deploy:dev
 - Main marketing website
 - Static content with dynamic elements
 - Integration with other services
-
 

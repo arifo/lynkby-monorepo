@@ -4,10 +4,10 @@ Ultra-fast landing pages that auto-sync your TikToks. Lowest-fee tip jar. Simple
 
 ## 🏗️ Architecture
 
-- **App** (`@lynkby/app`): Main dashboard application for managing profiles
-- **Web** (`@lynkby/web`): Public-facing web app for user profiles
-- **API** (`@lynkby/api`): Edge API for subdomain routing and caching
-- **Marketing** (`@lynkby/marketing`): Marketing website for the platform
+- Dashboard (`@lynkby/dashboard`): Creator SPA to manage profiles, links, and settings. Calls the API Worker and triggers cache revalidation on publish. Deployed to Cloudflare Pages at `dashboard.lynkby.com`.
+- Web (`@lynkby/web`): Marketing site for `lynkby.com`. Static export via Next.js with no server-side code.
+- Worker (`@lynkby/worker`): Wildcard Cloudflare Worker that serves public user pages at `*.lynkby.com`. Renders pages, caches HTML, exposes `/_revalidate` for per-user cache purge.
+- API Worker (`@lynkby/api-worker`): Hono-based API at `api.lynkby.com` that handles auth, page CRUD, username checks, and Stripe/TikTok webhooks. Provides public read-only endpoints consumed by the Worker.
 
 ## 🚀 Quick Start
 
@@ -27,10 +27,11 @@ pnpm install
 pnpm dev
 
 # Or start individually
-pnpm --filter @lynkby/app dev      # http://localhost:3001
-pnpm --filter @lynkby/web dev      # http://localhost:3000
-pnpm --filter @lynkby/api dev      # http://localhost:8787
-pnpm --filter @lynkby/marketing dev # http://localhost:3002
+pnpm --filter @lynkby/dashboard dev   # http://localhost:3001
+pnpm --filter @lynkby/web dev         # http://localhost:3000
+pnpm --filter @lynkby/api-worker dev  # http://localhost:8787
+pnpm --filter @lynkby/worker dev      # http://localhost:8788
+
 ```
 
 ### Environment Setup
@@ -38,26 +39,24 @@ pnpm --filter @lynkby/marketing dev # http://localhost:3002
 Each app has its own `.dev.vars` file for local development. Copy the examples and configure:
 
 ```bash
-# apps/app/.dev.vars
+# apps/dashboard/.dev.vars
 DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
-API_REVALIDATE_URL=https://lynkby-api.arifento85.workers.dev/_revalidate
+DIRECT_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
+WORKER_REVALIDATE_URL=http://localhost:8788/_revalidate
 REVALIDATE_SECRET=dev-secret-change-me
 NODE_ENV=development
 NEXTAUTH_SECRET=dev-secret-change-me-in-production
 NEXTAUTH_URL=http://localhost:3001
-DIRECT_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
 
 # apps/web/.dev.vars
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api.arifento85.workers.dev
+NEXT_PUBLIC_APP_API_BASE=http://localhost:8787
 NODE_ENV=development
 
-# apps/api/.dev.vars
-APP_API_BASE=https://app.lynkby.com
+# apps/api-worker/.dev.vars (used by Prisma scripts)
+APP_API_BASE=https://dashboard.lynkby.com
 REVALIDATE_SECRET=dev-secret-change-me
-
-# apps/marketing/.dev.vars
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api.arifento85.workers.dev
-NODE_ENV=development
+DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
+DIRECT_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
 ```
 
 ## 🚀 Deployment
@@ -75,10 +74,11 @@ pnpm build
 pnpm deploy:all
 
 # Or deploy individually
-pnpm deploy:app        # Deploy main app to app.lynkby.com
-pnpm deploy:web        # Deploy web app to lynkby.com
-pnpm deploy:api        # Deploy API to api.lynkby.com
-pnpm deploy:marketing  # Deploy marketing to lynkby.com
+pnpm deploy:dashboard     # Deploy dashboard to dashboard.lynkby.com
+pnpm deploy:web           # Deploy web (marketing) to lynkby.com
+pnpm deploy:api-worker    # Deploy API to api.lynkby.com
+pnpm deploy:worker        # Deploy wildcard worker to *.lynkby.com
+
 ```
 
 ### Deploy to Development
@@ -90,23 +90,23 @@ pnpm deploy:all:dev
 ## 📚 Documentation
 
 - [Deployment Guide](DEPLOYMENT.md) - Complete deployment instructions
-- [App README](apps/app/README.md) - Main dashboard application
-- [Web README](apps/web/README.md) - Public web application
-- [API README](apps/api/README.md) - Edge API service
-- [Marketing README](apps/marketing/README.md) - Marketing website
+- [Dashboard README](apps/dashboard/README.md) - Creator SPA
+- [Web README](apps/web/README.md) - Marketing site
+- [API Worker README](apps/api-worker/README.md) - Edge API service
+
 
 ## 🏛️ Project Structure
 
 ```
 lynkby/
 ├── apps/
-│   ├── app/           # Main dashboard app (app.lynkby.com)
-│   ├── web/           # Public web app (lynkby.com)
-│   ├── api/           # Edge API (api.lynkby.com)
-│   └── marketing/     # Marketing site (lynkby.com)
+│   ├── dashboard/     # Creator SPA (dashboard.lynkby.com)
+│   ├── web/           # Marketing site (lynkby.com)
+│   ├── worker/        # Wildcard worker (*.lynkby.com)
+│   └── api-worker/    # Edge API (api.lynkby.com)
 ├── packages/
-│   └── shared/        # Shared utilities and types
-├── prisma/            # Database schema and migrations
+│   ├── shared/        # Edge-safe utilities and schemas
+│   └── server/        # Server-only utilities (Prisma, Stripe, sessions)
 └── package.json       # Root workspace configuration
 ```
 
@@ -132,14 +132,14 @@ pnpm --filter @lynkby/app prisma:seed
 
 ## 🌐 Domain Structure
 
-- **app.lynkby.com** - Main dashboard application
-- **lynkby.com** - Marketing website and web app
-- **api.lynkby.com** - API service (handled by API)
-- **lynkby-api.arifento85.workers.dev** - API service
+- dashboard.lynkby.com - Creator dashboard (Pages)
+- lynkby.com - Marketing site (Pages)
+- api.lynkby.com - API service (API Worker)
+- {username}.lynkby.com - Public user pages (Wildcard Worker)
 
 ## 🚀 Performance Features
 
-- **Static Export**: Web and marketing apps use static generation for maximum speed
+- **Static Export**: Web app uses static generation for maximum speed
 - **Edge Caching**: API implements intelligent caching with stale-while-revalidate
 - **Server-Side Rendering**: Main app uses SSR for dynamic functionality
 - **Optimized Images**: WebP format with lazy loading
@@ -156,5 +156,3 @@ pnpm --filter @lynkby/app prisma:seed
 - Cloudflare Analytics for Pages and Workers
 - Built-in error tracking and performance insights
 - Edge caching analytics and hit rates
-
-
