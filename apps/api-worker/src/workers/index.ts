@@ -17,7 +17,7 @@ const worker = {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
     try {
       console.log("🚀 Worker fetch handler called");
-      console.log("Environment keys:", Object.keys(env));
+      // console.log("Environment keys:", Object.keys(env));
       
       const app = createApp(env);
       return app.fetch(request, env, ctx);

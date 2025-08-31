@@ -88,8 +88,8 @@ export function validateEnv(env: unknown): EnvVars {
       }
     }
     
-    console.log("🔐 Validating environment variables...");
-    console.log("Available keys:", Object.keys(envVars));
+    // console.log("🔐 Validating environment variables...");
+    // console.log("Available keys:", Object.keys(envVars));
     
     const validated = EnvSchema.parse(envVars);
     

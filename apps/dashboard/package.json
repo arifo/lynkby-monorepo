@@ -7,6 +7,7 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
+		"test-auth": "tsx scripts/test-auth.ts",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"deploy:prod": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"deploy:dev": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env preview",
@@ -42,6 +43,7 @@
 		"eslint-config-next": "15.4.6",
 		"postcss": "^8.4.35",
 		"tailwindcss": "^3.4.3",
+		"tsx": "^4.19.2",
 		"typescript": "^5",
 		"wrangler": "^4.33.1"
 	}

@@ -1,29 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth-context";
 import { authAPI } from "@/lib/api";
-import { Link as LinkIcon, Mail, ArrowLeft } from "lucide-react";
-
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
+import { Link as LinkIcon, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
+
+  const { isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,38 +35,39 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      await authAPI.sendMagicLink(email);
-      setIsSuccess(true);
-      setMessage("Magic link sent! Check your email.");
+      const response = await authAPI.sendMagicLink(email, "/dashboard");
+      if (response.ok) {
+        setIsSuccess(true);
+        setMessage(response.message || "Magic link sent! Check your email.");
+        setCooldown(response.cooldown || 60);
+      } else {
+        setMessage(response.error || "Failed to send magic link. Please try again.");
+        setIsSuccess(false);
+      }
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      setMessage(apiError.response?.data?.message || "Failed to send magic link. Please try again.");
+      console.error("Magic link request failed:", error);
+      const errorMessage = error && typeof error === 'object' && 'response' in error &&
+        error.response && typeof error.response === 'object' && 'data' in error.response &&
+        error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data
+        ? String(error.response.data.error)
+        : "Failed to send magic link. Please try again.";
+      setMessage(errorMessage);
       setIsSuccess(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleMagicLinkVerification = async (token: string) => {
-    try {
-      const response = await authAPI.verifyMagicLink(token);
-      if (response.token) {
-        login(response.token);
-        router.push("/dashboard");
-      }
-    } catch (error: unknown) {
-      setMessage("Invalid or expired magic link. Please request a new one.");
-    }
-  };
 
-  // Check for magic link token in URL
-  if (typeof window !== "undefined") {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    if (token) {
-      handleMagicLinkVerification(token);
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
+    if (cooldown > 0) {
+      timer = setTimeout(() => {
+        setCooldown(cooldown - 1);
+      }, 1000);
     }
-  }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -84,7 +87,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to Lynkby</h1>
-          <p className="text-gray-600">We’ll email you a secure magic link to continue</p>
+          <p className="text-gray-600">We&apos;ll email you a secure magic link to continue</p>
         </div>
 
         {/* Login Form */}
@@ -121,34 +124,36 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full"
-                isLoading={isLoading}
-                disabled={!email || isLoading}
+                disabled={!email || isLoading || cooldown > 0}
               >
-                Send magic link
+                {isLoading ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown} seconds` : "Send magic link"}
               </Button>
             </form>
           ) : (
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <Mail className="w-8 h-8 text-green-600" />
+                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Check your email</h3>
               <p className="text-gray-600">
                 We&apos;ve sent a magic link to <strong>{email}</strong>
               </p>
               <p className="text-sm text-gray-500">
-                Click the link in your email to sign in. The link will expire in 10 minutes.
+                Click the link in your email to sign in. The link will expire in 15 minutes and redirect you to the dashboard.
               </p>
 
               <div className="pt-4">
                 <Button
                   variant="outline"
+                  disabled={cooldown > 0}
                   onClick={() => {
+                    if (cooldown > 0) return;
                     setIsSuccess(false);
                     setMessage("");
+                    setCooldown(60);
                   }}
                 >
-                  Send another link
+                  {cooldown > 0 ? `Resend in ${cooldown} seconds` : "Send another link"}
                 </Button>
               </div>
             </div>
