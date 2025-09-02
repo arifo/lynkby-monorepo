@@ -49,11 +49,11 @@ NEXTAUTH_SECRET=dev-secret-change-me-in-production
 NEXTAUTH_URL=http://localhost:3001
 
 # apps/web/.dev.vars
-NEXT_PUBLIC_APP_API_BASE=http://localhost:8787
+NEXT_PUBLIC_APP_BASE=http://localhost:8787
 NODE_ENV=development
 
 # apps/api-worker/.dev.vars (used by Prisma scripts)
-APP_API_BASE=https://dashboard.lynkby.com
+APP_BASE=https://dashboard.lynkby.com
 REVALIDATE_SECRET=dev-secret-change-me
 DATABASE_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable
 DIRECT_URL=postgresql://username:password@localhost:5432/lynkby_dev?sslmode=disable

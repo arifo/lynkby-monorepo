@@ -12,6 +12,7 @@ import {
   AuthErrorResponse
 } from "./auth.schemas";
 import { RATE_LIMIT_CONFIG } from "./auth.schemas";
+import { pageRepository } from "../../core/repositories/page.repository";
 import { getClientIP } from "../../core/util/ip.utils";
 
 export class AuthController {
@@ -33,22 +34,49 @@ export class AuthController {
       const ipLimit = RATE_LIMIT_CONFIG.EMAIL_PER_IP;
 
       const readCounter = async (key: string, windowMs: number) => {
-        const val = await c.env.KV_CACHE.get(key);
-        if (!val) return { count: 0, expiresAt: 0 };
+        // Check if KV_CACHE is available
+        if (!c.env.KV_CACHE) {
+          console.warn("KV_CACHE not available, skipping rate limiting");
+          return { count: 0, expiresAt: 0 };
+        }
+        
         try {
-          const obj = JSON.parse(val) as { count: number; expiresAt: number };
-          return obj;
-        } catch {
+          const val = await c.env.KV_CACHE.get(key);
+          if (!val) return { count: 0, expiresAt: 0 };
+          try {
+            const obj = JSON.parse(val) as { count: number; expiresAt: number };
+            return obj;
+          } catch {
+            return { count: 0, expiresAt: 0 };
+          }
+        } catch (error) {
+          console.warn("Failed to read from KV_CACHE:", error);
           return { count: 0, expiresAt: 0 };
         }
       };
 
       const writeCounter = async (key: string, count: number, expiresAt: number) => {
-        const ttl = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
-        await c.env.KV_CACHE.put(key, JSON.stringify({ count, expiresAt }), { expirationTtl: ttl });
+        // Check if KV_CACHE is available
+        if (!c.env.KV_CACHE) {
+          console.warn("KV_CACHE not available, skipping rate limiting write");
+          return;
+        }
+        
+        try {
+          const ttl = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
+          await c.env.KV_CACHE.put(key, JSON.stringify({ count, expiresAt }), { expirationTtl: ttl });
+        } catch (error) {
+          console.warn("Failed to write to KV_CACHE:", error);
+        }
       };
 
       const bump = async (key: string, limit: { maxRequests: number; windowMs: number }) => {
+        // If KV_CACHE is not available, skip rate limiting
+        if (!c.env.KV_CACHE) {
+          console.warn("KV_CACHE not available, allowing request without rate limiting");
+          return { limited: false, cooldown: 0 } as const;
+        }
+        
         const state = await readCounter(key, limit.windowMs);
         const windowStart = state.expiresAt > now ? state.expiresAt - limit.windowMs : now;
         const expiresAt = state.expiresAt > now ? state.expiresAt : now + limit.windowMs;
@@ -91,8 +119,8 @@ export class AuthController {
       await authService.sendMagicLinkEmail(email, verificationUrl, {
         provider: RESEND_API_KEY ? 'resend' : undefined,
         apiKey: RESEND_API_KEY,
-        from: c.env.EMAIL_FROM,
-        supportEmail: c.env.SUPPORT_EMAIL,
+        from: c.env.SMTP_FROM,
+        supportEmail: c.env.SMTP_USER,
         appName: c.env.APP_NAME || 'Lynkby',
       });
       
@@ -238,6 +266,23 @@ export class AuthController {
       const normalizedUsername = username.toLowerCase();
       // Update username
       const updatedUser = await authService.updateUsername(user.id, normalizedUsername);
+      // Auto-create page if missing
+      try {
+        const existing = await pageRepository.findByUserId(updatedUser.id);
+        if (!existing) {
+          const emailLocal = (updatedUser.email || "").split("@")[0] || normalizedUsername;
+          const displayName = emailLocal
+            .replace(/[._-]+/g, " ")
+            .split(" ")
+            .filter(Boolean)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ") || normalizedUsername;
+          await pageRepository.create({ userId: updatedUser.id, displayName });
+          logger.info("Auto-created page for user (legacy setup)", { userId: updatedUser.id, username: normalizedUsername });
+        }
+      } catch (err) {
+        logger.warn("Failed to auto-create page (legacy setup)", { userId: updatedUser.id, error: err instanceof Error ? err.message : String(err) });
+      }
       // Refresh cookie after profile update to maintain sliding expiry
       const cookieOptions = {
         httpOnly: true,

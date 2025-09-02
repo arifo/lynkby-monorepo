@@ -28,8 +28,8 @@ function AuthCallbackContent() {
           const token = urlParams.get("token");
           const redirect = urlParams.get("redirect") || "/dashboard";
 
-          console.log("Extracted token:", token);
-          console.log("Extracted redirect:", redirect);
+          // console.log("Extracted token:", token);
+          // console.log("Extracted redirect:", redirect);
 
           return { token, redirect };
         } catch (err) {
@@ -56,7 +56,7 @@ function AuthCallbackContent() {
           setMessage("Verifying your magic link...");
 
           const response = await authAPI.verifyMagicLink(token);
-
+          console.log("Verification response:", response);
           if (response.ok && response.user) {
             // Login the user
             login(response.user);
@@ -65,11 +65,11 @@ function AuthCallbackContent() {
             setMessage("Login successful! Redirecting...");
 
             // Redirect based on user status
-            const redirectPath = response.user.isNewUser ? "/setup-username" : redirect;
+            const redirectPath = response.user.username ? redirect : "/onboarding/username";
 
             setTimeout(() => {
               router.push(redirectPath);
-            }, 1500);
+            }, 500);
           } else {
             setStatus("error");
             setError(response.error || "Invalid or expired magic link");

@@ -25,15 +25,15 @@ Each app has its own `.dev.vars` file for local development:
 ```bash
 # apps/app/.dev.vars
 NODE_ENV=development
-APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
+APP_BASE=https://lynkby-api-dev.arifento85.workers.dev
 
 # apps/web/.dev.vars
 NODE_ENV=development
-NEXT_PUBLIC_APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
+NEXT_PUBLIC_APP_BASE=https://lynkby-api-dev.arifento85.workers.dev
 
 # apps/api/.dev.vars
 NODE_ENV=development
-APP_API_BASE=https://app.lynkby.com
+APP_BASE=https://app.lynkby.com
 REVALIDATE_SECRET=dev-secret-change-me
 
 
@@ -149,7 +149,7 @@ Set in `wrangler.toml` environment sections:
 ```toml
 [env.production.vars]
 NODE_ENV = "production"
-APP_API_BASE = "https://api.lynkby.com"
+APP_BASE = "https://api.lynkby.com"
 ```
 
 ### Development Variables
@@ -159,7 +159,7 @@ Use `.dev.vars` files (gitignored):
 ```bash
 # Example: apps/app/.dev.vars
 NODE_ENV=development
-APP_API_BASE=https://lynkby-api-dev.arifento85.workers.dev
+APP_BASE=https://lynkby-api-dev.arifento85.workers.dev
 ```
 
 ## GitHub Actions Deployment

@@ -102,7 +102,7 @@ echo "Press Enter to skip any variable you don't want to set right now"
 
 # Core configuration
 NODE_ENV=$(prompt_for_var "NODE_ENV" "Environment (development/staging/production)" "development" false)
-APP_API_BASE=$(prompt_for_var "APP_API_BASE" "App API base URL" "http://localhost:3001" false)
+APP_BASE=$(prompt_for_var "APP_BASE" "App API base URL" "http://localhost:3001" false)
 REVALIDATE_SECRET=$(prompt_for_var "REVALIDATE_SECRET" "Revalidation secret" "dev-secret-change-me" false)
 
 # Authentication
@@ -130,7 +130,7 @@ cat > .env.local << EOF
 
 # App Configuration
 NODE_ENV=$NODE_ENV
-APP_API_BASE=$APP_API_BASE
+APP_BASE=$APP_BASE
 REVALIDATE_SECRET=$REVALIDATE_SECRET
 
 # Authentication
@@ -159,7 +159,7 @@ cat > .dev.vars << EOF
 
 # App Configuration
 NODE_ENV=$NODE_ENV
-APP_API_BASE=$APP_API_BASE
+APP_BASE=$APP_BASE
 REVALIDATE_SECRET=$REVALIDATE_SECRET
 
 # Authentication

@@ -73,7 +73,7 @@ pnpm deploy
 ### **Core Configuration**
 ```bash
 NODE_ENV=development
-APP_API_BASE=http://localhost:3001
+APP_BASE=http://localhost:3001
 REVALIDATE_SECRET=your-secret-here
 ```
 

@@ -38,7 +38,7 @@ name = "lynkby-api-dev"
 # Environment variables for development
 [env.development.vars]
 NODE_ENV = "development"
-# APP_API_BASE=http://localhost:3001
+# APP_BASE=http://localhost:3001
 # REVALIDATE_SECRET = "your-production-revalidate-secret-here"
 
 # JWT_SECRET = "your-production-jwt-secret-must-be-at-least-32-chars-long"
@@ -64,7 +64,7 @@ name = "lynkby-api"
 # Environment variables for production
 [env.production.vars]
 NODE_ENV = "production"
-# APP_API_BASE=http://localhost:3001
+# APP_BASE=http://localhost:3001
 # REVALIDATE_SECRET = "your-production-revalidate-secret-here"
 
 # JWT_SECRET = "your-production-jwt-secret-must-be-at-least-32-chars-long"
@@ -83,6 +83,18 @@ NODE_ENV = "production"
 # TIKTOK_CLIENT_KEY="your_tiktok_client_key_here"
 # TIKTOK_CLIENT_SECRET="your_tiktok_client_secret_here"
 
+RESEND_API_KEY=123
+SMTP_HOST=smtp.zoho.com
+SMTP_PORT=465
+SMTP_USER=exampl@zoho.com
+SMTP_PASS=passowd
+SMTP_FROM=exampl@zoho.com
+
 # Cron triggers
 [triggers]
 crons = ["0 */6 * * *"] # Every 6 hours
+
+ [[kv_namespaces]]
+   binding = "KV_CACHE"
+   id = "your-actual-kv-namespace-id"
+   preview_id = "your-actual-preview-kv-namespace-id"

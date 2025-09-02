@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   },
   // Ensure static assets are properly handled
   trailingSlash: false,
+  // Environment variables configuration
+  env: {
+    // Set production defaults for build time
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.lynkby.com',
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Lynkby',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://app.lynkby.com',
+  },
   // Ensure CSS modules work properly
   webpack: (config, { isServer }) => {
     if (!isServer) {

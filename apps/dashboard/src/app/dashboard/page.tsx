@@ -1,20 +1,47 @@
 "use client";
 
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Button } from "@/components/ui/button";
 import { Link as LinkIcon, BarChart3, Link, Settings, LogOut, User, Plus } from "lucide-react";
+import { pagesAPI, userAPI } from "@/lib/api";
+import { User as AuthUser } from "@/lib/auth";
 
 function DashboardContent() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState<null | AuthUser>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await logout();
     router.push("/");
   };
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user?.username) return;
+      setLoadingProfile(true);
+      setProfileError(null);
+      try {
+        const res = await userAPI.getProfile();
+        if (res.ok && res.user) {
+          setProfile(res.user);
+        } else {
+          setProfile(null);
+        }
+      } catch (e) {
+        setProfileError("Failed to load profile");
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    load();
+  }, [user?.username]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -30,7 +57,12 @@ function DashboardContent() {
 
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <User className="w-4 h-4" />
+              {/* {profile?.page?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.page.avatarUrl} alt="Avatar" className="w-6 h-6 rounded-full object-cover" />
+              ) : (
+                <User className="w-4 h-4" />
+              )} */}
               <span>@{user?.username || "username"}</span>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -46,11 +78,13 @@ function DashboardContent() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.username ? `@${user.username}` : user?.email}!
+            Welcome back, {profile?.username || (user?.username ? `@${user.username}` : user?.email)}!
           </h1>
-          <p className="text-gray-600">
-            Manage your links, track analytics, and grow your audience.
-          </p>
+          {/* {profile?.page?.bio ? (
+            <p className="text-gray-600">{profile.page.bio}</p>
+          ) : (
+            <p className="text-gray-600">Manage your links, track analytics, and grow your audience.</p>
+          )} */}
         </div>
 
         {/* Quick Stats */}
@@ -59,7 +93,7 @@ function DashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Links</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
+                {/* <p className="text-2xl font-bold text-gray-900">{profile?.page?.links?.length ?? 0}</p> */}
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Link className="w-6 h-6 text-blue-600" />
@@ -209,6 +243,21 @@ function DashboardContent() {
               <p>• Customize your bio page</p>
               <p>• Connect your social media accounts</p>
               <p>• Set up analytics tracking</p>
+            </div>
+          </div>
+        )}
+
+        {/* Public URLs */}
+        {user?.username && (
+          <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Your Public URLs</h3>
+            <div className="text-sm text-gray-700 space-y-1">
+              <p>
+                Subdomain: <a className="text-blue-600 hover:underline" href={`https://${user.username}.lynkby.com`} target="_blank" rel="noreferrer">https://{user.username}.lynkby.com</a>
+              </p>
+              <p>
+                Path: <a className="text-blue-600 hover:underline" href={`https://lynkby.com/u/${user.username}`} target="_blank" rel="noreferrer">https://lynkby.com/u/{user.username}</a>
+              </p>
             </div>
           </div>
         )}

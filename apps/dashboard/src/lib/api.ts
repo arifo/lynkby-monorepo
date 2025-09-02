@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// Use localhost:8787 for development (API worker port)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -80,6 +79,28 @@ export const authAPI = {
   },
 };
 
+export const usernameAPI = {
+  check: async (candidate: string) => {
+    const response = await api.get(`/v1/username/availability?u=${encodeURIComponent(candidate)}`);
+    return response.data as {
+      username: string;
+      normalized: string;
+      valid: boolean;
+      available: boolean;
+      reasons: string[];
+    };
+  },
+  claim: async (username: string) => {
+    const response = await api.post(`/v1/username/claim`, { username });
+    return response.data as {
+      ok: boolean;
+      username?: string;
+      urls?: { subdomain: string; path: string };
+      error?: string;
+    };
+  },
+};
+
 export const userAPI = {
   getProfile: async () => {
     const response = await api.get("/v1/auth/me");
@@ -90,5 +111,15 @@ export const userAPI = {
     // This would use the pages API endpoint
     const response = await api.put("/v1/pages/profile", data);
     return response.data;
+  },
+};
+
+export const pagesAPI = {
+  getPublic: async (username: string) => {
+    const response = await api.get(`/v1/pages/${encodeURIComponent(username)}`);
+    return response.data as {
+      ok: boolean;
+      profile?: { username: string; displayName: string; bio?: string; avatarUrl?: string; links: { label: string; url: string; order: number }[] };
+    };
   },
 };

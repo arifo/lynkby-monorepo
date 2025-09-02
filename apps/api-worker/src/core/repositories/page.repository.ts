@@ -58,7 +58,7 @@ export class PageRepository implements IPageRepository {
     return databaseService.executeWithRetry(
       async () => {
         const sql = `
-          INSERT INTO "Page" (id, "userId", "displayName", bio, "avatarUrl", "createdAt", "updatedAt")
+          INSERT INTO "pages" (id, "userId", "displayName", bio, "avatarUrl", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING *
         `;
@@ -77,7 +77,7 @@ export class PageRepository implements IPageRepository {
   async findById(id: string): Promise<Page | null> {
     return databaseService.executeWithRetry(
       async () => {
-        const sql = `SELECT * FROM "Page" WHERE id = $1`;
+        const sql = `SELECT * FROM "pages" WHERE id = $1`;
         const result = await databaseService.query(sql, [id]);
         return result.length > 0 ? result[0] as Page : null;
       },
@@ -88,7 +88,7 @@ export class PageRepository implements IPageRepository {
   async findByUserId(userId: string): Promise<Page | null> {
     return databaseService.executeWithRetry(
       async () => {
-        const sql = `SELECT * FROM "Page" WHERE "userId" = $1`;
+        const sql = `SELECT * FROM "pages" WHERE "userId" = $1`;
         const result = await databaseService.query(sql, [userId]);
         return result.length > 0 ? result[0] as Page : null;
       },
@@ -100,8 +100,8 @@ export class PageRepository implements IPageRepository {
     return databaseService.executeWithRetry(
       async () => {
         const sql = `
-          SELECT p.* FROM "Page" p
-          JOIN "User" u ON p."userId" = u.id
+          SELECT p.* FROM "pages" p
+          JOIN "users" u ON p."userId" = u.id
           WHERE u.username = $1
         `;
         const result = await databaseService.query(sql, [username]);
@@ -139,7 +139,7 @@ export class PageRepository implements IPageRepository {
         params.push(id); // for WHERE clause
 
         const sql = `
-          UPDATE "Page" 
+          UPDATE "pages" 
           SET ${updates.join(', ')}
           WHERE id = $${paramIndex}
           RETURNING *
@@ -155,7 +155,7 @@ export class PageRepository implements IPageRepository {
   async delete(id: string): Promise<void> {
     return databaseService.executeWithRetry(
       async () => {
-        const sql = `DELETE FROM "Page" WHERE id = $1`;
+        const sql = `DELETE FROM "pages" WHERE id = $1`;
         await databaseService.execute(sql, [id]);
       },
       "delete page"
@@ -165,7 +165,7 @@ export class PageRepository implements IPageRepository {
   async findAll(): Promise<Page[]> {
     return databaseService.executeWithRetry(
       async () => {
-        const sql = `SELECT * FROM "Page" ORDER BY "createdAt" DESC`;
+        const sql = `SELECT * FROM "pages" ORDER BY "createdAt" DESC`;
         const result = await databaseService.query(sql);
         return result as Page[];
       },
@@ -176,7 +176,7 @@ export class PageRepository implements IPageRepository {
   async count(): Promise<number> {
     return databaseService.executeWithRetry(
       async () => {
-        const sql = `SELECT COUNT(*) as count FROM "Page"`;
+        const sql = `SELECT COUNT(*) as count FROM "pages"`;
         const result = await databaseService.query(sql);
         return parseInt(result[0].count);
       },
@@ -188,7 +188,7 @@ export class PageRepository implements IPageRepository {
     return databaseService.executeWithRetry(
       async () => {
         // First get the page
-        const pageSql = `SELECT * FROM "Page" WHERE id = $1`;
+        const pageSql = `SELECT * FROM "pages" WHERE id = $1`;
         const pageResult = await databaseService.query(pageSql, [id]);
         
         if (pageResult.length === 0) {
@@ -198,7 +198,7 @@ export class PageRepository implements IPageRepository {
         const page = pageResult[0] as Page;
 
         // Then get the links
-        const linksSql = `SELECT * FROM "Link" WHERE "pageId" = $1 ORDER BY "order" ASC`;
+        const linksSql = `SELECT * FROM "links" WHERE "pageId" = $1 ORDER BY "order" ASC`;
         const linksResult = await databaseService.query(linksSql, [id]);
         const links = linksResult as Link[];
 

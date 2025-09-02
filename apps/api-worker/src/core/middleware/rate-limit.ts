@@ -20,6 +20,13 @@ export const rateLimit = (config: Partial<RateLimitConfig> = {}) => {
     const limitKey = `rate_limit:${key}`;
     
     try {
+      // Check if KV_CACHE is available
+      if (!c.env.KV_CACHE) {
+        console.warn("KV_CACHE not available, skipping rate limiting");
+        await next();
+        return;
+      }
+      
       // Get current request count from KV
       const current = await c.env.KV_CACHE.get(limitKey);
       const requestCount = current ? parseInt(current) : 0;

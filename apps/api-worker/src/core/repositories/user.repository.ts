@@ -42,7 +42,7 @@ export class UserRepository implements IUserRepository {
       await client.connect();
       
       const sql = `
-        INSERT INTO "User" (id, email, username, "createdAt", "updatedAt")
+        INSERT INTO "users" (id, email, username, "createdAt", "updatedAt")
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `;
@@ -64,7 +64,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `SELECT * FROM "User" WHERE id = $1`;
+      const sql = `SELECT * FROM "users" WHERE id = $1`;
       const { rows } = await client.query(sql, [id]);
       return rows.length > 0 ? rows[0] as User : null;
     } finally {
@@ -78,7 +78,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `SELECT * FROM "User" WHERE email = $1`;
+      const sql = `SELECT * FROM "users" WHERE email = $1`;
       const { rows } = await client.query(sql, [email]);
       return rows.length > 0 ? rows[0] as User : null;
     } finally {
@@ -92,7 +92,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `SELECT * FROM "User" WHERE username = $1`;
+      const sql = `SELECT * FROM "users" WHERE username = $1`;
       const { rows } = await client.query(sql, [username]);
       return rows.length > 0 ? rows[0] as User : null;
     } finally {
@@ -126,7 +126,7 @@ export class UserRepository implements IUserRepository {
       params.push(id); // for WHERE clause
 
       const sql = `
-        UPDATE "User" 
+        UPDATE "users" 
         SET ${updates.join(', ')}
         WHERE id = $${paramIndex}
         RETURNING *
@@ -145,7 +145,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `DELETE FROM "User" WHERE id = $1`;
+      const sql = `DELETE FROM "users" WHERE id = $1`;
       await client.query(sql, [id]);
     } finally {
       await dbFactory.closeClient(client);
@@ -158,7 +158,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `SELECT * FROM "User" ORDER BY "createdAt" DESC`;
+      const sql = `SELECT * FROM "users" ORDER BY "createdAt" DESC`;
       const { rows } = await client.query(sql);
       return rows as User[];
     } finally {
@@ -172,7 +172,7 @@ export class UserRepository implements IUserRepository {
     try {
       await client.connect();
       
-      const sql = `SELECT COUNT(*) as count FROM "User"`;
+      const sql = `SELECT COUNT(*) as count FROM "users"`;
       const { rows } = await client.query(sql);
       return parseInt(rows[0].count);
     } finally {

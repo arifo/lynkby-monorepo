@@ -13,7 +13,8 @@ const PublicProfileSchema = z.object({
 });
 
 export async function fetchProfile(apiBase: string, username: string): Promise<Profile | null> {
-  const url = `${apiBase}/api/public/page?username=${encodeURIComponent(username)}`;
+  // Use the v1 pages endpoint (legacy /api also exists but v1 is canonical)
+  const url = `${apiBase}/v1/pages/${encodeURIComponent(username)}`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const data = await res.json();

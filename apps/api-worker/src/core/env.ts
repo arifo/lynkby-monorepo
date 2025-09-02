@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
-  APP_API_BASE: z.string().url().default("http://localhost:3001"),
+  APP_BASE: z.string().url().default("http://localhost:3001"),
   REVALIDATE_SECRET: z.string().min(1),
   JWT_SECRET: z.string().min(32, "JWT secret must be at least 32 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
@@ -54,8 +54,17 @@ export type AppEnv = EnvVars & Bindings;
 
 // Reserved usernames that cannot be used
 export const RESERVED_USERNAMES = new Set([
-  "", "www", "app", "api", "static", "cdn", "help", "admin", "status", "docs",
-  "login", "logout", "signup", "auth", "dashboard", "profile", "settings"
+  "",
+  // Common infra
+  "www","api","app","admin","support","blog","help","status","docs","static","cdn","m","mail","ftp",
+  // Environments
+  "beta","dev","test","staging",
+  // Payments/brands
+  "payments","stripe","tiktok","lynkby",
+  // Auth/system
+  "login","logout","signup","auth","dashboard","profile","settings",
+  // DNS challenge labels (block exact labels even though invalid as user names)
+  "_acme-challenge","_dnslink",
 ]);
 
 // JWT configuration constants

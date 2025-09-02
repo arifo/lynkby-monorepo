@@ -6,6 +6,7 @@ import { auth } from "../../core/middleware/auth";
 import { logger } from "../../core/util/logger";
 import { createError } from "../../core/errors";
 import { RESERVED_USERNAMES } from "../../core/env";
+import { pageRepository } from "../../core/repositories/page.repository";
 
 const router = new Hono();
 
@@ -31,36 +32,33 @@ router.get("/:username",
   cache({ maxAge: 300, staleWhileRevalidate: 60 }),
   async (c) => {
     const username = c.req.param("username").toLowerCase();
-    
+
     if (RESERVED_USERNAMES.has(username)) {
       throw createError.validationError("Username is reserved");
     }
-    
+
     try {
-      // TODO: Implement pages service
-      // const page = await pagesService.getPublic(username);
-      // if (!page) {
-      //   throw createError.notFound("Page not found");
-      // }
-      
-      // Placeholder response for now
-      const page = {
+      // Look up page by username and include links
+      const page = await pageRepository.findByUsername(username);
+      if (!page) {
+        throw createError.notFound("Page not found");
+      }
+      const pageWithLinks = await pageRepository.findWithLinks(page.id);
+      const links = pageWithLinks?.links || [];
+
+      const profile = {
         username,
-        displayName: "Demo User",
-        bio: "This is a demo page",
-        avatarUrl: "https://placehold.co/128x128/png",
-        links: [
-          { label: "My TikTok", url: "https://www.tiktok.com/@demo", order: 0 },
-          { label: "Shop", url: "https://example.com/shop", order: 1 },
-        ],
+        displayName: page.displayName,
+        bio: page.bio,
+        avatarUrl: page.avatarUrl,
+        links: links.map((l) => ({ label: l.label, url: l.url, order: l.order })),
       };
-      
+
       logger.logAPI("GET", `page:${username}`);
-      return c.json({ ok: true, profile: page });
-      
+      return c.json({ ok: true, profile });
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        throw error as any;
       }
       throw createError.internalError("Failed to fetch page");
     }

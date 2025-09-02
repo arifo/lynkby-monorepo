@@ -167,8 +167,8 @@ healthRouter.get("/_health/detailed", async (c) => {
     
     try {
       // Use a single query to get both users and pages count for faster response
-      const usersCountSql = `SELECT COUNT(*) as count FROM "User"`;
-      const pagesCountSql = `SELECT COUNT(*) as count FROM "Page"`;
+      const usersCountSql = `SELECT COUNT(*) as count FROM "users"`;
+      const pagesCountSql = `SELECT COUNT(*) as count FROM "pages"`;
       
       // Execute both queries in parallel for better performance
       const [usersResult, pagesResult] = await Promise.all([
@@ -181,12 +181,12 @@ healthRouter.get("/_health/detailed", async (c) => {
       
       // Only fetch sample data if we have data
       if (usersCount > 0) {
-        const sampleUsersSql = `SELECT id, username, email, "createdAt" FROM "User" ORDER BY "createdAt" DESC LIMIT 3`;
+        const sampleUsersSql = `SELECT id, username, email, "createdAt" FROM "users" ORDER BY "createdAt" DESC LIMIT 3`;
         sampleUsers = await databaseService.query(sampleUsersSql);
       }
       
       if (pagesCount > 0) {
-        const samplePagesSql = `SELECT id, "displayName", "userId", "createdAt" FROM "Page" ORDER BY "createdAt" DESC LIMIT 3`;
+        const samplePagesSql = `SELECT id, "displayName", "userId", "createdAt" FROM "pages" ORDER BY "createdAt" DESC LIMIT 3`;
         samplePages = await databaseService.query(samplePagesSql);
       }
       

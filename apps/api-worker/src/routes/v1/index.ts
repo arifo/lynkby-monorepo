@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import authRoutes from "./auth.routes";
+import usernameRoutes from "./username.routes";
 import pagesRoutes from "./pages.routes";
 import tiktokRoutes from "./tiktok.routes";
 import tipsRoutes from "./tips.routes";
@@ -10,6 +11,7 @@ const v1Router = new Hono();
 
 // Mount all v1 feature routers
 v1Router.route("/auth", authRoutes);
+v1Router.route("/username", usernameRoutes);
 v1Router.route("/pages", pagesRoutes);
 v1Router.route("/tiktok", tiktokRoutes);
 v1Router.route("/tips", tipsRoutes);

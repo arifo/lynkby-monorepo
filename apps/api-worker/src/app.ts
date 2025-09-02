@@ -20,7 +20,8 @@ export function createApp(env: unknown): Hono<{ Bindings: AppEnv }> {
       "https://app.lynkby.com", 
       "https://app-dev.lynkby.com", 
       "http://localhost:3000",
-      "http://localhost:3001" // Add dashboard port
+      "http://localhost:3001", // Add dashboard port
+      "https://lynkby.com" // Public site origin
     ],
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

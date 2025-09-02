@@ -18,9 +18,17 @@ app.get('/_revalidate', async (c) => {
   return c.json({ ok: true, username });
 });
 
-// Render user page
-app.get('/:username', async (c) => {
-  const username = c.req.param('username').toLowerCase();
+function extractSubdomainUsername(host: string): string | null {
+  // Expecting something like username.lynkby.com
+  const RESERVED = new Set(['www','app','api','status','cdn','static']);
+  const parts = (host || '').split(':')[0].split('.');
+  if (parts.length < 3) return null;
+  const [sub] = parts;
+  if (!sub || RESERVED.has(sub)) return null;
+  return sub.toLowerCase();
+}
+
+async function renderUser(c: any, username: string) {
   const apiBase = c.env.API_BASE || 'http://localhost:8787';
   return cacheHTML(c, username, 300, async () => {
     const profile = await fetchProfile(apiBase, username);
@@ -29,6 +37,28 @@ app.get('/:username', async (c) => {
     }
     return renderHTML(profile);
   });
+}
+
+// Serve subdomain root as profile
+app.get('/', async (c) => {
+  const host = new URL(c.req.url).host;
+  const username = extractSubdomainUsername(host);
+  if (!username) return c.json({ ok: false, error: 'not_subdomain' }, 404);
+  return renderUser(c, username);
+});
+
+// Serve /u/:username path variant
+app.get('/u/:username', async (c) => {
+  const username = c.req.param('username').toLowerCase();
+  return renderUser(c, username);
+});
+
+// Keep legacy /:username route (optional)
+app.get('/:username', async (c) => {
+  const username = c.req.param('username').toLowerCase();
+  // Avoid catching internal routes
+  if (username.startsWith('_')) return c.notFound();
+  return renderUser(c, username);
 });
 
 export default app;
