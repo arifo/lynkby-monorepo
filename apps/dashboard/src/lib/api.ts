@@ -12,11 +12,11 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor to add auth token (for API calls that need it)
+// Request interceptor for cookie-based authentication
 api.interceptors.request.use(
   (config) => {
-    // For cookie-based auth, we don't need to manually add tokens
-    // The browser will automatically send cookies
+    // Pure cookie-based auth - no need to add Authorization headers
+    // Cookies are automatically sent with withCredentials: true
     return config;
   },
   (error) => {
@@ -43,7 +43,7 @@ export const authAPI = {
   sendMagicLink: async (email: string, redirectPath?: string) => {
     const response = await api.post("/v1/auth/request-link", { 
       email,
-      redirectPath: redirectPath || "/dashboard"
+      redirectPath: redirectPath
     });
     return response.data;
   },
@@ -60,17 +60,7 @@ export const authAPI = {
     return response.data;
   },
   
-  // Setup username for first-time users
-  setupUsername: async (username: string) => {
-    const response = await api.post("/v1/auth/setup-username", { username });
-    return response.data;
-  },
-  
-  // Check username availability
-  checkUsernameAvailability: async (username: string) => {
-    const response = await api.get(`/v1/auth/check-username?username=${encodeURIComponent(username)}`);
-    return response.data;
-  },
+
   
   // Logout - matches API worker endpoint
   logout: async () => {
@@ -79,23 +69,28 @@ export const authAPI = {
   },
 };
 
-export const usernameAPI = {
-  check: async (candidate: string) => {
-    const response = await api.get(`/v1/username/availability?u=${encodeURIComponent(candidate)}`);
-    return response.data as {
-      username: string;
-      normalized: string;
-      valid: boolean;
-      available: boolean;
-      reasons: string[];
-    };
-  },
-  claim: async (username: string) => {
-    const response = await api.post(`/v1/username/claim`, { username });
+export const setupAPI = {
+  // Check username availability - now uses setup endpoint
+  checkUsernameAvailability: async (username: string) => {
+    const response = await api.get(`/v1/setup/check-username?username=${encodeURIComponent(username)}`);
     return response.data as {
       ok: boolean;
-      username?: string;
-      urls?: { subdomain: string; path: string };
+      available: boolean;
+      reason?: string;
+    };
+  },
+  
+  // Claim username - now uses setup endpoint
+  claimUsername: async (username: string) => {
+    const response = await api.post("/v1/setup/claim-username", { username });
+    return response.data as {
+      ok: boolean;
+      message: string;
+      user?: {
+        id: string;
+        email: string;
+        username: string;
+      };
       error?: string;
     };
   },

@@ -1,0 +1,58 @@
+/**
+ * Staging environment configuration for @lynkby/api
+ * This extends the base configuration with staging-specific settings
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-staging",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  /**
+	 * Hyperdrive configuration for staging
+	 */
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "3c39294851eb43a287e0de9155c76454",
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV_CACHE",
+      "id": "b6dd729a9b274cb0ac03732266503f56",
+      "preview_id": "b6dd729a9b274cb0ac03732266503f56"
+    }
+  ],
+  /**
+	 * Staging Environment Variables (Non-sensitive)
+	 */
+  "vars": {
+    "NODE_ENV": "staging",
+    "APP_BASE": "https://api-staging.lynkby.com",
+    "JWT_EXPIRES_IN": "7d",
+    "EMAIL_FROM": "staging@lynkby.com",
+    "SUPPORT_EMAIL": "staging-support@lynkby.com",
+    "APP_NAME": "Lynkby Staging"
+  }
+  /**
+	 * Staging Secrets (Set with `wrangler secret put --env staging`)
+	 * 
+	 * Required secrets for staging:
+	 * - JWT_SECRET: Staging JWT secret (min 32 chars)
+	 * - REVALIDATE_SECRET: Staging revalidation secret
+	 * - SENTRY_DSN: Staging Sentry DSN
+	 * - DATABASE_URL: Staging database URL
+	 * - DIRECT_URL: Staging direct database URL
+	 * - STRIPE_SECRET_KEY: Stripe test secret key
+	 * - STRIPE_WEBHOOK_SECRET: Stripe test webhook secret
+	 * - TIKTOK_CLIENT_KEY: TikTok test client key
+	 * - TIKTOK_CLIENT_SECRET: TikTok test client secret
+	 * - RESEND_API_KEY: Resend test API key
+	 */
+}

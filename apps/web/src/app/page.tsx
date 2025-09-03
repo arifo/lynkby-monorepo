@@ -41,7 +41,7 @@ export default function Home() {
             </nav>
 
             <div className="flex items-center space-x-4">
-              <Link href="/login">
+              <Link href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}>
                 <button className="btn-outline">Sign In</button>
               </Link>
               <Link href="#get-started">

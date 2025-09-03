@@ -81,13 +81,38 @@ export function removeCookie(name: string, options: {
 }
 
 // Check if user has an active session
+// Note: With HttpOnly cookies, we can't read the session token directly
+// We use a local storage flag to track authentication state
 export function hasActiveSession(): boolean {
-  const sessionToken = getCookie('session_token');
-  return !!sessionToken;
+  if (typeof window === "undefined") return false;
+  
+  try {
+    // Check if we have a local flag indicating an active session
+    const hasSession = localStorage.getItem('lynkby_has_session');
+    return hasSession === 'true';
+  } catch {
+    return false;
+  }
 }
 
-// Clear all auth-related cookies
+// Set session flag in localStorage
+export function setSessionFlag(hasSession: boolean): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    if (hasSession) {
+      localStorage.setItem('lynkby_has_session', 'true');
+    } else {
+      localStorage.removeItem('lynkby_has_session');
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+// Clear all auth-related cookies and session flag
 export function clearAuthCookies(): void {
   removeCookie('session_token', { path: '/' });
   removeCookie('session_token', { path: '/', domain: '.lynkby.com' });
+  setSessionFlag(false);
 }

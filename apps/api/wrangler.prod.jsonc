@@ -1,0 +1,58 @@
+/**
+ * Production environment configuration for @lynkby/api
+ * This extends the base configuration with production-specific settings
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  /**
+	 * Hyperdrive configuration for production
+	 */
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "3c39294851eb43a287e0de9155c76454"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV_CACHE",
+      "id": "b6dd729a9b274cb0ac03732266503f56",
+      "preview_id": "b6dd729a9b274cb0ac03732266503f56"
+    }
+  ],
+  /**
+	 * Production Environment Variables (Non-sensitive)
+	 */
+  "vars": {
+    "NODE_ENV": "production",
+    "APP_BASE": "https://app.lynkby.com",
+    "JWT_EXPIRES_IN": "7d",
+    "EMAIL_FROM": "noreply@lynkby.com",
+    "SUPPORT_EMAIL": "support@lynkby.com",
+    "APP_NAME": "Lynkby",
+  }
+  /**
+	 * Production Secrets (Set with `wrangler secret put --env production`)
+	 * 
+	 * Required secrets for production:
+	 * - JWT_SECRET: Production JWT secret (min 32 chars)
+	 * - REVALIDATE_SECRET: Production revalidation secret
+	 * - SENTRY_DSN: Production Sentry DSN
+	 * - DATABASE_URL: Production database URL
+	 * - DIRECT_URL: Production direct database URL
+	 * - STRIPE_SECRET_KEY: Stripe live secret key
+	 * - STRIPE_WEBHOOK_SECRET: Stripe live webhook secret
+	 * - TIKTOK_CLIENT_KEY: TikTok live client key
+	 * - TIKTOK_CLIENT_SECRET: TikTok live client secret
+	 * - RESEND_API_KEY: Resend live API key
+	 */
+}

@@ -1,21 +1,53 @@
 {
-  "name": "cloudflare-workers-openapi",
+  "name": "@lynkby/api",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
-    "cf-typegen": "wrangler types"
+    "dev": "wrangler dev src/index.ts --local --config wrangler.local.jsonc --port 8787",
+    "dev:graceful": "wrangler dev src/index.ts --local --config wrangler.local.jsonc --port 8787 --graceful-shutdown",
+    "build": "tsc -p tsconfig.json",
+    "deploy": "pnpm build && wrangler deploy --config wrangler.prod.jsonc",
+    "deploy:dev": "pnpm build && wrangler deploy --config wrangler.dev.jsonc",
+    "deploy:staging": "pnpm build && wrangler deploy --config wrangler.staging.jsonc",
+    "deploy:prod": "pnpm build && wrangler deploy --config wrangler.prod.jsonc",
+    "start": "pnpm dev",
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit",
+    "secrets:list": "wrangler secret list",
+    "secrets:list:dev": "wrangler secret list --env development",
+    "secrets:list:staging": "wrangler secret list --env staging",
+    "secrets:list:prod": "wrangler secret list --env production",
+    "secrets:put": "wrangler secret put",
+    "secrets:put:dev": "wrangler secret put --env development",
+    "secrets:put:staging": "wrangler secret put --env staging",
+    "secrets:put:prod": "wrangler secret put --env production"
   },
   "dependencies": {
+    "@lynkby/server": "workspace:*",
+    "@lynkby/shared": "workspace:*",
+    "@neondatabase/serverless": "^1.0.1",
+    "@prisma/client": "6.14.0",
+    "@prisma/extension-accelerate": "^2.0.2",
+    "@sentry/cloudflare": "^10.8.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "chanfana": "^2.6.3",
+    "cookie": "^1.0.2",
     "hono": "^4.6.20",
-    "zod": "^3.24.1"
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "resend": "^6.0.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250115.0",
     "@types/node": "22.13.0",
+    "@types/pg": "^8.15.5",
     "@types/service-worker-mock": "^2.0.4",
+    "dotenv-cli": "^10.0.0",
+    "prisma": "6.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.4",
     "wrangler": "^4.33.1"
   }
 }

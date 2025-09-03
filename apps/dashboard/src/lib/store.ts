@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { AuthState, User, hasActiveSession, clearAuthCookies } from "./auth";
-import { authAPI } from "./api";
+import { AuthState, User, hasActiveSession, clearAuthCookies, setSessionFlag } from "./auth";
+import { authAPI, setupAPI } from "./api";
 
 interface AuthStore extends AuthState {
   login: (user: User) => void;
@@ -20,6 +20,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       
       login: (user: User) => {
+        setSessionFlag(true);
         set({ user, isAuthenticated: true, isLoading: false });
       },
       
@@ -37,6 +38,7 @@ export const useAuthStore = create<AuthStore>()(
       },
       
       setUser: (user: User) => {
+        setSessionFlag(true);
         set({ user, isAuthenticated: true, isLoading: false });
       },
       
@@ -56,16 +58,19 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const response = await authAPI.getCurrentUser();
           if (response.ok && response.user) {
+            setSessionFlag(true);
             set({ 
               user: response.user, 
               isAuthenticated: true, 
               isLoading: false 
             });
           } else {
+            setSessionFlag(false);
             set({ user: null, isAuthenticated: false, isLoading: false });
           }
         } catch (error) {
           console.error("Auth check failed:", error);
+          setSessionFlag(false);
           set({ user: null, isAuthenticated: false, isLoading: false });
         }
       },
@@ -77,10 +82,11 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true });
         
         try {
-          const response = await authAPI.setupUsername(username);
+          const response = await setupAPI.claimUsername(username);
           if (response.ok && response.user) {
+            setSessionFlag(true);
             set({ 
-              user: response.user, 
+              user: { ...response.user, isNewUser: false }, 
               isAuthenticated: true, 
               isLoading: false 
             });

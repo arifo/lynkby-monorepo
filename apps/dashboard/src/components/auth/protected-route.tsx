@@ -28,7 +28,7 @@ export function ProtectedRoute({
 
       // Redirect if username is required but user doesn't have one
       if (requireUsername && user && user.isNewUser) {
-        router.push("/setup-username");
+        router.push("/onboarding/username");
         return;
       }
     }

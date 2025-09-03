@@ -1,0 +1,58 @@
+/**
+ * Local development configuration for @lynkby/api
+ * This configuration is used for local development with `wrangler dev`
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": false
+  },
+  /**
+	 * Hyperdrive configuration for local development
+	 */
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "3c39294851eb43a287e0de9155c76454",
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV_CACHE",
+      "id": "your-kv-namespace-id-here",
+      "preview_id": "your-preview-kv-namespace-id-here"
+    }
+  ],
+  /**
+	 * Local Development Environment Variables (Non-sensitive)
+	 */
+  "vars": {
+    "NODE_ENV": "development",
+    "APP_BASE": "http://localhost:3001",
+    "JWT_EXPIRES_IN": "7d",
+    "EMAIL_FROM": "dev@lynkby.com",
+    "SUPPORT_EMAIL": "dev-support@lynkby.com",
+    "APP_NAME": "Lynkby Local"
+  }
+  /**
+	 * Local Development Secrets (Set with `wrangler secret put --env local`)
+	 * 
+	 * For local development, you can use test/development values:
+	 * - JWT_SECRET: Local development JWT secret (min 32 chars)
+	 * - REVALIDATE_SECRET: Local revalidation secret
+	 * - SENTRY_DSN: Local Sentry DSN (optional)
+	 * - DATABASE_URL: Local database URL
+	 * - DIRECT_URL: Local direct database URL
+	 * - STRIPE_SECRET_KEY: Stripe test secret key
+	 * - STRIPE_WEBHOOK_SECRET: Stripe test webhook secret
+	 * - TIKTOK_CLIENT_KEY: TikTok test client key
+	 * - TIKTOK_CLIENT_SECRET: TikTok test client secret
+	 * - RESEND_API_KEY: Resend test API key
+	 */
+}

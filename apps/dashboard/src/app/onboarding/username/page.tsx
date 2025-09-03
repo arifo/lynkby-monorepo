@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { usernameAPI } from "@/lib/api";
+import { setupAPI } from "@/lib/api";
 import { z } from "zod";
 import { Check, X, Loader2 } from "lucide-react";
 
@@ -100,9 +100,9 @@ export default function ChooseUsernamePage() {
     setStatus("checking");
     setHint("Checking…");
     try {
-      const res = await usernameAPI.check(normalized);
+      const res = await setupAPI.checkUsernameAvailability(normalized);
       setLastChecked(normalized);
-      if (!res.valid) {
+      if (!res.ok) {
         setStatus("unavailable");
         setHint("Invalid format");
         console.log("Analytics: Username Availability Checked", { valid: false, available: false, reason: "INVALID_FORMAT" });
@@ -110,14 +110,14 @@ export default function ChooseUsernamePage() {
       }
       if (res.available) {
         setStatus("available");
-        setHint("Nice — it’s available.");
+        setHint("Nice — it's available.");
         console.log("Analytics: Username Availability Checked", { valid: true, available: true });
       } else {
         setStatus("unavailable");
-        setHint(res.reasons?.includes("RESERVED") ? "Reserved. Try another." : "Already taken. Try another or pick a suggestion.");
-        console.log("Analytics: Username Availability Checked", { valid: true, available: false, reason: res.reasons?.[0] });
+        setHint(res.reason?.includes("reserved") ? "Reserved. Try another." : "Already taken. Try another or pick a suggestion.");
+        console.log("Analytics: Username Availability Checked", { valid: true, available: false, reason: res.reason });
       }
-    } catch (e) {
+    } catch {
       setStatus("error");
       setHint("Network error. Please retry.");
       setToast("We hit a snag checking availability.");
@@ -148,12 +148,12 @@ export default function ChooseUsernamePage() {
     if (!isCTAEnabled) return;
     try {
       console.log("Analytics: Username Claimed", { username_len: value.length, contains_dash: value.includes("-") });
-      const res = await usernameAPI.claim(value);
+      const res = await setupAPI.claimUsername(value);
       if (res.ok) {
         console.log("Analytics: Onboarding Completed", { path: "username" });
         router.replace("/dashboard");
       } else {
-        if (res.error === "TAKEN") {
+        if (res.error?.includes("taken") || res.error?.includes("already")) {
           setStatus("unavailable");
           setHint("Already taken. Try another or pick a suggestion.");
         } else {
@@ -161,7 +161,7 @@ export default function ChooseUsernamePage() {
           setHint("Invalid or reserved username.");
         }
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setHint("Something went wrong.");
       setToast("Couldn’t claim username. Please retry.");
