@@ -84,9 +84,9 @@ export class AuthRepository extends BaseRepository implements IAuthRepository {
       const sql = `
         INSERT INTO "magic_link_tokens" (id, email, "tokenHash", "createdAt", "expiresAt", "ipCreatedFrom", "uaCreatedFrom", "redirectPath")
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT (email) DO UPDATE SET
+        ON CONFLICT ("tokenHash") DO UPDATE SET
           id = EXCLUDED.id,
-          "tokenHash" = EXCLUDED."tokenHash",
+          email = EXCLUDED.email,
           "expiresAt" = EXCLUDED."expiresAt",
           "createdAt" = EXCLUDED."createdAt",
           "ipCreatedFrom" = EXCLUDED."ipCreatedFrom",

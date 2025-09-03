@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,79 +8,101 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique @db.VarChar(255)
-  username  String?  @unique @db.VarChar(50)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  lastLoginAt DateTime?
-  isVerified Boolean @default(false)
-  
-  // Relations
+  id              String           @id @default(cuid())
+  email           String           @unique @db.VarChar(255)
+  username        String?          @unique @db.VarChar(50)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  lastLoginAt     DateTime?
+  isVerified      Boolean          @default(false)
+  loginRequests   LoginRequest[]
   magicLinkTokens MagicLinkToken[]
-  sessions        UserSession[]
   page            Page?
-  
+  sessions        UserSession[]
+
   @@map("users")
 }
 
 model Page {
   id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String   @unique
   displayName String
   bio         String?
   avatarUrl   String?
-  links       Link[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+  links       Link[]
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   @@map("pages")
 }
 
 model Link {
   id        String   @id @default(cuid())
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   pageId    String
   label     String
   url       String
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   @@map("links")
+  @@index([pageId], map: "links_pageId_idx")
 }
 
 model MagicLinkToken {
-  id        String   @id @default(cuid())
-  email     String   @db.VarChar(255)
-  tokenHash String   @unique // Store only hashed tokens
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  usedAt    DateTime? // Track when token was consumed
-  ipCreatedFrom String? // IP address where token was created
-  uaCreatedFrom String? // User agent where token was created
-  redirectPath String? // Where to redirect after verification
-  
-  // Relations
-  user      User     @relation(fields: [email], references: [email], onDelete: Cascade)
-  
+  id            String    @id @default(cuid())
+  email         String    @unique @db.VarChar(255)
+  tokenHash     String    @unique
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  usedAt        DateTime?
+  ipCreatedFrom String?
+  uaCreatedFrom String?
+  redirectPath  String?
+  requestId     String?
+  user          User      @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+
   @@map("magic_link_tokens")
+  @@index([email], map: "magic_link_tokens_email_idx")
+  @@index([expiresAt], map: "magic_link_tokens_expiresAt_idx")
+  @@index([requestId], map: "magic_link_tokens_requestId_idx")
 }
 
 model UserSession {
-  id        String   @id @default(cuid())
-  userId    String
-  tokenHash String   @unique // Store only hashed tokens
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  lastUsedAt DateTime @default(now())
-  revokedAt DateTime? // Track session revocation
-  ipAddress String? // IP address where session was created
-  userAgent String? // User agent where session was created
-  
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   @@map("user_sessions")
+  @@index([userId], map: "user_sessions_userId_idx")
+  @@index([expiresAt], map: "user_sessions_expiresAt_idx")
+}
+
+model LoginRequest {
+  // Use DB-generated UUID to ensure inserts via raw SQL don't need to provide id
+  id             String    @id @default(dbgenerated("gen_random_uuid()"))
+  requestId      String    @unique
+  email          String    @db.VarChar(255)
+  code           String    @db.VarChar(6)
+  status         String    @default("pending")
+  userId         String?
+  handshakeNonce String?
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("login_requests")
+  @@index([status, expiresAt], map: "login_requests_status_expires_idx")
+  @@index([userId], map: "login_requests_userId_idx")
+  @@index([email], map: "login_requests_email_idx")
 }

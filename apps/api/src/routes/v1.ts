@@ -88,7 +88,26 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
     return authController.logout(c);
   });
 
+  // Handoff pattern endpoints
+  authRouter.post("/request", (c) => {
+    const authController = getAuthController(c.env);
+    return authController.createLoginRequest(c);
+  });
 
+  authRouter.get("/wait", (c) => {
+    const authController = getAuthController(c.env);
+    return authController.waitForLoginRequest(c);
+  });
+
+  authRouter.post("/finalize", (c) => {
+    const authController = getAuthController(c.env);
+    return authController.finalizeLoginRequest(c);
+  });
+
+  authRouter.post("/verify-code", (c) => {
+    const authController = getAuthController(c.env);
+    return authController.verifyCode(c);
+  });
 
   // Auth health check
   authRouter.get("/health", (c) => {
@@ -103,14 +122,20 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
       service: "Authentication Service",
       version: "2.0.0",
       endpoints: {
-        "POST /request-link": "Request magic link for passwordless login",
-        "GET /verify": "Verify magic link and create session",
+        "POST /request-link": "Request magic link for passwordless login (legacy)",
+        "GET /verify": "Verify magic link and create session (legacy)",
+        "POST /request": "Create login request with handoff pattern",
+        "GET /wait": "Wait for login request completion",
+        "POST /finalize": "Finalize login request and create session",
+        "POST /verify-code": "Verify 6-digit code (fallback)",
         "GET /me": "Get current user information",
         "POST /logout": "Logout and clear session",
         "GET /health": "Service health check",
       },
       features: [
         "Passwordless authentication with magic links",
+        "Handoff pattern for mobile webview compatibility",
+        "6-digit code fallback for email clients",
         "Secure session management with HttpOnly cookies",
         "Rate limiting and abuse protection",
         "Disposable email domain blocking",

@@ -68,6 +68,36 @@ export const authAPI = {
     const response = await api.post("/v1/auth/logout");
     return response.data;
   },
+
+  // Handoff pattern endpoints
+  createLoginRequest: async (email: string, redirectPath?: string) => {
+    const response = await api.post("/v1/auth/request", { 
+      email,
+      redirectPath
+    });
+    return response.data;
+  },
+
+  waitForLoginRequest: async (requestId: string) => {
+    const response = await api.get(`/v1/auth/wait?requestId=${encodeURIComponent(requestId)}`);
+    return response.data;
+  },
+
+  finalizeLoginRequest: async (requestId: string, handshakeNonce: string) => {
+    const response = await api.post("/v1/auth/finalize", {
+      requestId,
+      handshakeNonce
+    });
+    return response.data;
+  },
+
+  verifyCode: async (requestId: string, code: string) => {
+    const response = await api.post("/v1/auth/verify-code", {
+      requestId,
+      code
+    });
+    return response.data;
+  },
 };
 
 export const setupAPI = {

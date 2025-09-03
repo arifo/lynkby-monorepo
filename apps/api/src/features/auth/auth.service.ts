@@ -285,13 +285,13 @@ export class AuthService extends BaseService implements IAuthService {
   }
 
   // Find user by email
-  private async findUserByEmail(email: string): Promise<AuthUser | null> {
+  async findUserByEmail(email: string): Promise<AuthUser | null> {
     const user = await userRepository.findByEmail(email.toLowerCase());
     return user ? this.userToAuthUser(user) : null;
   }
 
   // Create new user
-  private async createUser(email: string): Promise<AuthUser> {
+  async createUser(email: string): Promise<AuthUser> {
     const user = await userRepository.createUserForAuth(email.toLowerCase());
     return this.userToAuthUser(user);
   }
@@ -428,7 +428,7 @@ export class AuthService extends BaseService implements IAuthService {
   }
 
   // Find user by ID
-  private async findUserById(userId: string): Promise<AuthUser | null> {
+  async findUserById(userId: string): Promise<AuthUser | null> {
     const user = await userRepository.findById(userId);
     return user ? this.userToAuthUser(user) : null;
   }
@@ -477,11 +477,13 @@ export class AuthService extends BaseService implements IAuthService {
   async sendMagicLinkEmail(
     email: string,
     verificationUrl: string,
+    code?: string,
   ): Promise<void> {
     try {
         await emailService.sendMagicLinkEmail({
           to: email,
           url: verificationUrl,
+          code,
         });
         this.logAuthEvent({ type: 'magic_link_delivered', email, details: { via: 'resend' } });
     } catch (err) {

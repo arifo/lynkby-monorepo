@@ -22,8 +22,11 @@ export interface IAuthService {
   createSession(options: SessionOptions, secret: string): Promise<{ session: UserSession; plaintextToken: string }>;
   validateSession(sessionToken: string, secret: string): Promise<{ user: AuthUser; session: UserSession } | null>;
   deleteSessionByToken(token: string): Promise<void>;
+  findUserById(userId: string): Promise<AuthUser | null>;
+  findUserByEmail(email: string): Promise<AuthUser | null>;
+  createUser(email: string): Promise<AuthUser>;
 
-  sendMagicLinkEmail(email: string, verificationUrl: string): Promise<void>;
+  sendMagicLinkEmail(email: string, verificationUrl: string, code?: string): Promise<void>;
   cleanupExpired(): Promise<void>;
   revokeAllUserSessions(userId: string, reason?: string): Promise<void>;
   setEnvironment(env: AppEnv): void;
@@ -39,6 +42,10 @@ export interface IAuthController {
   consumeMagicLink(c: Context): Promise<Response>;
   getCurrentUser(c: Context): Promise<Response>;
   logout(c: Context): Promise<Response>;
+  createLoginRequest(c: Context): Promise<Response>;
+  waitForLoginRequest(c: Context): Promise<Response>;
+  finalizeLoginRequest(c: Context): Promise<Response>;
+  verifyCode(c: Context): Promise<Response>;
   healthCheck(c: Context): Promise<Response>;
 }
 

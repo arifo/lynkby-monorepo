@@ -58,6 +58,7 @@ export default function ChooseUsernamePage() {
   const [hint, setHint] = useState<string>("");
   const [lastChecked, setLastChecked] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const ariaLiveRef = useRef<HTMLDivElement>(null);
 
   // Route guards
@@ -136,7 +137,7 @@ export default function ChooseUsernamePage() {
     if (normalized && normalized !== lastChecked) check(normalized);
   };
 
-  const isCTAEnabled = status === "available";
+  const isCTAEnabled = status === "available" && !isSubmitting;
 
   const onSuggestion = (s: string) => {
     setValue(s);
@@ -145,14 +146,20 @@ export default function ChooseUsernamePage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isCTAEnabled) return;
+    if (!isCTAEnabled || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setToast(null);
+
     try {
       console.log("Analytics: Username Claimed", { username_len: value.length, contains_dash: value.includes("-") });
       const res = await setupAPI.claimUsername(value);
       if (res.ok) {
         console.log("Analytics: Onboarding Completed", { path: "username" });
+        // Navigate immediately on success
         router.replace("/dashboard");
       } else {
+        setIsSubmitting(false);
         if (res.error?.includes("taken") || res.error?.includes("already")) {
           setStatus("unavailable");
           setHint("Already taken. Try another or pick a suggestion.");
@@ -162,9 +169,10 @@ export default function ChooseUsernamePage() {
         }
       }
     } catch {
+      setIsSubmitting(false);
       setStatus("error");
       setHint("Something went wrong.");
-      setToast("Couldn’t claim username. Please retry.");
+      setToast("Couldn't claim username. Please retry.");
     }
   };
 
@@ -199,7 +207,8 @@ export default function ChooseUsernamePage() {
               spellCheck={false}
               aria-invalid={status === "unavailable"}
               aria-describedby="username-hint username-status"
-              className="flex-1 h-12 text-base outline-none bg-transparent"
+              disabled={isSubmitting}
+              className="flex-1 h-12 text-base outline-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="yourname"
             />
             <div className="px-3">
@@ -216,14 +225,15 @@ export default function ChooseUsernamePage() {
           <div id="username-status" className={`text-sm ${status === "unavailable" ? "text-red-600" : status === "available" ? "text-green-600" : "text-gray-500"}`}>{hint}</div>
           <div aria-live="polite" aria-atomic="true" className="sr-only" ref={ariaLiveRef} />
 
-          {suggestions.length > 0 && (
+          {suggestions.length > 0 && !isSubmitting && (
             <div className="flex flex-wrap gap-2 mt-2">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => onSuggestion(s)}
-                  className="px-3 h-11 rounded-full border border-gray-300 hover:border-gray-400 active:scale-95"
+                  disabled={isSubmitting}
+                  className="px-3 h-11 rounded-full border border-gray-300 hover:border-gray-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-300"
                   aria-label={`Use suggestion ${s}`}
                 >
                   @{s}
@@ -235,10 +245,17 @@ export default function ChooseUsernamePage() {
           <button
             type="submit"
             disabled={!isCTAEnabled}
-            className={`w-full h-12 rounded-md text-white font-medium ${isCTAEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300"}`}
+            className={`w-full h-12 rounded-md text-white font-medium flex items-center justify-center ${isCTAEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300"}`}
             aria-disabled={!isCTAEnabled}
           >
-            Continue
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Setting up your username...
+              </>
+            ) : (
+              "Continue"
+            )}
           </button>
           <p className="text-xs text-gray-500 text-center">You can’t change this later</p>
         </form>

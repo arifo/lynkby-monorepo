@@ -27,10 +27,13 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "clean": "pnpm -r exec -- rm -rf .next .open-next dist node_modules/.cache",
     "install:all": "pnpm install",
-    "db:generate": "pnpm --filter @lynkby/api-worker db:generate",
-    "db:migrate": "pnpm --filter @lynkby/api-worker db:migrate",
-    "db:studio": "pnpm --filter @lynkby/api-worker db:studio",
-    "db:status": "pnpm --filter @lynkby/api-worker db:status"
+    "db:generate": "pnpm --filter @lynkby/server db:generate",
+    "db:migrate": "pnpm --filter @lynkby/server db:migrate",
+    "db:migrate:deploy": "pnpm --filter @lynkby/server db:migrate:deploy",
+    "db:migrate:reset": "pnpm --filter @lynkby/server db:migrate:reset",
+    "db:studio": "pnpm --filter @lynkby/server db:studio",
+    "db:seed": "pnpm --filter @lynkby/server db:seed",
+    "shared:build": "pnpm --filter @lynkby/shared build"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
