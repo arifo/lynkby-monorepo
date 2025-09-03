@@ -1,4 +1,4 @@
-import { databaseService, userRepository, authRepository, type User, type MagicLinkToken as RepoMagicLinkToken, type UserSession as RepoUserSession } from "../../core/repositories";
+import { userRepository, authRepository, type User, type MagicLinkToken as RepoMagicLinkToken, type UserSession as RepoUserSession } from "../../core/repositories";
 import { logger } from "../../core/util/logger";
 import { createError } from "../../core/errors";
 import { 
@@ -16,7 +16,6 @@ import { rateLimitService, rateLimitConfigs } from "../../core/services/rate-lim
 import { tokenUtils } from "../../core/util/token.utils";
 import { emailService } from "../../core/services/email.service";
 import { BaseService } from "../../core/services/base.service";
-import type { AppEnv } from "../../core/env";
 import type { IAuthService } from "./auth.interfaces";
 
 export class AuthService extends BaseService implements IAuthService {

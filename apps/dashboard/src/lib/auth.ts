@@ -1,8 +1,14 @@
+// Dashboard-specific user type (subset of AuthUser for API responses)
 export interface User {
   id: string;
   email: string;
   username?: string;
-  isNewUser: boolean;
+  isNewUser?: boolean;
+  // Optional properties that may not be present in API responses
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLoginAt?: Date;
+  isVerified?: boolean;
 }
 
 export interface AuthState {

@@ -11,6 +11,7 @@
     "deploy:prod": "pnpm build && wrangler deploy --config wrangler.toml --env production"
   },
   "dependencies": {
+    "@lynkby/shared": "workspace:*",
     "hono": "^4.5.7",
     "zod": "^3.23.8"
   },
@@ -20,4 +21,3 @@
     "wrangler": "^4.32.0"
   }
 }
-

@@ -1,8 +1,10 @@
+// Legacy exports (keeping for backward compatibility)
 import { z } from "zod";
 
 export const LinkSchema = z.object({
   label: z.string(),
-  url: z.string().url()
+  url: z.string().url(),
+  order: z.number().optional()
 });
 
 export const ProfileSchema = z.object({
@@ -33,3 +35,24 @@ export function getProfile(username: string) {
   const key = username.toLowerCase();
   return mockProfiles[key] ?? null;
 }
+
+// New shared exports
+// Schemas
+export * from './schemas/auth';
+export * from './schemas/setup';
+export * from './schemas/common';
+
+// Types
+export * from './types/auth';
+export * from './types/setup';
+export * from './types/token';
+export * from './types/common';
+
+// Utils
+export * from './utils/token';
+export * from './utils/ip';
+export * from './utils/email';
+export * from './utils/validation';
+
+// Constants
+export * from './constants/username';

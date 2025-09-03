@@ -13,6 +13,7 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
 	},
 	"dependencies": {
+		"@lynkby/shared": "workspace:*",
 		"@opennextjs/cloudflare": "^1.3.0",
 		"clsx": "^2.1.1",
 		"lucide-react": "^0.344.0",

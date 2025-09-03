@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { UsernameAvailabilityResponse, UsernameClaimResponse } from '@lynkby/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -71,28 +72,15 @@ export const authAPI = {
 
 export const setupAPI = {
   // Check username availability - now uses setup endpoint
-  checkUsernameAvailability: async (username: string) => {
+  checkUsernameAvailability: async (username: string): Promise<UsernameAvailabilityResponse> => {
     const response = await api.get(`/v1/setup/check-username?username=${encodeURIComponent(username)}`);
-    return response.data as {
-      ok: boolean;
-      available: boolean;
-      reason?: string;
-    };
+    return response.data;
   },
   
   // Claim username - now uses setup endpoint
-  claimUsername: async (username: string) => {
+  claimUsername: async (username: string): Promise<UsernameClaimResponse> => {
     const response = await api.post("/v1/setup/claim-username", { username });
-    return response.data as {
-      ok: boolean;
-      message: string;
-      user?: {
-        id: string;
-        email: string;
-        username: string;
-      };
-      error?: string;
-    };
+    return response.data;
   },
 };
 

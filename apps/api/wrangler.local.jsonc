@@ -20,6 +20,7 @@
     {
       "binding": "HYPERDRIVE",
       "id": "3c39294851eb43a287e0de9155c76454",
+      "localConnectionString": "postgresql://postgres:123456@localhost:5432/lynkby_dev?sslmode=require"
     }
   ],
   "kv_namespaces": [

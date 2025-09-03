@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-type Profile = {
-  username: string;
-  displayName: string;
-  bio?: string;
-  avatarUrl?: string;
-  links: { label: string; url: string; order: number }[];
-};
+import type { Profile } from "@lynkby/shared";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
 
@@ -70,7 +63,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
 
         {profile.links?.length > 0 && (
           <ul className="mt-6 space-y-3">
-            {profile.links.sort((a, b) => a.order - b.order).map((l, i) => (
+            {profile.links.sort((a, b) => (a.order || 0) - (b.order || 0)).map((l, i) => (
               <li key={`${l.label}-${i}`}>
                 <a
                   href={l.url}
