@@ -47,7 +47,13 @@
 		"NEXT_PUBLIC_APP_NAME": "Lynkby",
 		"NEXT_PUBLIC_APP_URL": "https://app.lynkby.com",
 		"NEXT_PUBLIC_API_URL": "https://api.lynkby.com"
-	}
+	},
+	"migrations": [
+		{
+			"tag": "v1-bucket-cache-purge",
+			"new_sqlite_classes": ["BucketCachePurge", "DOQueueHandler", "DOShardedTagCache"]
+		}
+	]
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
