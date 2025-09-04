@@ -117,7 +117,21 @@ export class SetupController implements ISetupController {
       // Check if user already has a username
       const currentUser = await userRepository.findById(userId);
       if (currentUser?.username) {
-        throw createError.conflict("User already has a username");
+        // If user already has the same username, return success
+        if (currentUser.username.toLowerCase() === username.toLowerCase()) {
+          const response: UsernameClaimResponse = {
+            ok: true,
+            message: "Username already claimed",
+            user: {
+              id: currentUser.id,
+              email: currentUser.email,
+              username: currentUser.username,
+            },
+          };
+          return c.json(response);
+        }
+        // If user has a different username, return conflict
+        throw createError.conflict("User already has a different username");
       }
       
       // Claim the username
@@ -163,6 +177,31 @@ export class SetupController implements ISetupController {
         throw error;
       }
       throw createError.internalError("Failed to claim username");
+    }
+  }
+
+  // Create default page (idempotent)
+  async setupDefaultPage(c: Context): Promise<Response> {
+    try {
+      this.setEnvironment(c);
+      // Must be authenticated
+      const { userId } = await this.getUserFromSession(c);
+
+      const result = await this.setupService.createDefaultPageIfMissing(userId);
+      const liveUrl = result.username ? `https://${result.username}.lynkby.com` : undefined;
+      const fallbackUrl = result.username ? `https://lynkby.com/u/${result.username}` : undefined;
+
+      return c.json({
+        pageId: result.pageId,
+        username: result.username,
+        liveUrl,
+        fallbackUrl,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw createError.internalError("Failed to setup default page");
     }
   }
 

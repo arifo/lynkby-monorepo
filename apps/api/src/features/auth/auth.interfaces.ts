@@ -6,9 +6,9 @@ import type {
   MagicLinkOptions, 
   SessionOptions,
   EmailValidationResult,
-  AuthEvent
-} from "./auth.types";
-import type { RateLimitState } from "../../core/services/rate-limit.service";
+  AuthEvent,
+  RateLimitState
+} from '@lynkby/shared';
 import type { AppEnv } from "../../core/env";
 
 /**

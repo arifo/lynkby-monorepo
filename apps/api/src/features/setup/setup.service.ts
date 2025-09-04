@@ -1,12 +1,12 @@
-import { userRepository } from "../../core/repositories";
+import { pageRepository, userRepository } from "../../core/repositories";
 import { logger } from "../../core/util/logger";
 import { createError } from "../../core/errors";
 import { 
-  UsernameValidationResult, 
-  UsernameClaimResult, 
-  USERNAME_RULES, 
-  USERNAME_ERRORS 
-} from "./setup.types";
+  UsernameValidationResult,
+  UsernameClaimResult,
+  USERNAME_RULES,
+  USERNAME_ERRORS
+} from '@lynkby/shared';
 import { BaseService } from "../../core/services/base.service";
 import type { AppEnv } from "../../core/env";
 import type { ISetupService } from "./setup.interfaces";
@@ -147,6 +147,46 @@ export class SetupService extends BaseService implements ISetupService {
         error: "Failed to claim username. Please try again."
       };
     }
+  }
+
+  // Create a default page with sample links if the user has none (idempotent)
+  async createDefaultPageIfMissing(userId: string): Promise<{
+    created: boolean;
+    pageId: string;
+    username?: string;
+  }> {
+    pageRepository.setEnvironment(this.getEnv());
+    userRepository.setEnvironment(this.getEnv());
+
+    // Check existing
+    const existing = await pageRepository.findByUserId(userId);
+    if (existing) {
+      const user = await userRepository.findById(userId);
+      return { created: false, pageId: existing.id, username: user?.username || undefined };
+    }
+
+    // Build defaults
+    const user = await userRepository.findById(userId);
+    const username = user?.username || undefined;
+    const displayName = username || (user?.email?.split("@")[0] ?? "My Lynkby");
+
+    // Update user with display name if not set
+    if (!user?.displayName) {
+      await userRepository.update(userId, { displayName });
+    }
+
+    // Create page
+    const page = await pageRepository.create({ userId });
+    logger.info("Default page created", { userId, pageId: page.id });
+
+    // Insert two default links
+    await pageRepository.insertLinks(page.id, [
+      { title: "👋 Welcome to my Lynkby", url: "https://lynkby.com", position: 0 },
+      { title: "💡 Example link", url: "https://example.com", position: 1 },
+    ]);
+    logger.info("Default links inserted", { pageId: page.id });
+
+    return { created: true, pageId: page.id, username };
   }
 }
 

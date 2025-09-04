@@ -14,23 +14,56 @@ export interface BaseEntity {
 export interface User extends BaseEntity {
   email: string;
   username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  lastLoginAt?: Date;
+}
+
+// User creation data
+export interface CreateUserData {
+  email: string;
+  username?: string;
+}
+
+// User update data
+export interface UpdateUserData {
+  email?: string;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
   lastLoginAt?: Date;
 }
 
 // Page entity interface
 export interface Page extends BaseEntity {
   userId: string;
-  displayName: string;
-  bio?: string;
-  avatarUrl?: string;
+  layout?: string;
+  theme?: string;
+  published?: boolean;
+  viewsAllTime?: number;
+}
+
+// Page creation data
+export interface CreatePageData {
+  userId: string;
+}
+
+// Page update data
+export interface UpdatePageData {
+  layout?: string;
+  theme?: string;
+  published?: boolean;
 }
 
 // Link entity interface
 export interface Link extends BaseEntity {
   pageId: string;
-  label: string;
+  title: string;
   url: string;
-  order: number;
+  position: number;
+  active?: boolean;
 }
 
 // Page with links interface

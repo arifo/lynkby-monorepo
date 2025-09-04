@@ -7,6 +7,8 @@ import { getAuthContainer } from "../features/auth/auth.container";
 import type { IAuthController } from "../features/auth/auth.interfaces";
 import { getSetupController } from "../features/setup/setup.container";
 import type { ISetupController } from "../features/setup/setup.interfaces";
+import { getPagesController } from "../features/pages/pages.container";
+import type { IPagesController } from "../features/pages/pages.interfaces";
 
 /**
  * Helper function to get auth controller for a request
@@ -40,6 +42,7 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
       endpoints: {
         auth: "/v1/auth",
         setup: "/v1/setup",
+        pages: "/v1/pages",
         // TODO: Add other endpoints as they are migrated
         // pages: "/v1/pages",
         // tiktok: "/v1/tiktok",
@@ -164,6 +167,12 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
     return setupController.claimUsername(c);
   });
 
+  // Setup default page (protected, idempotent)
+  setupRouter.post("/page", auth, (c) => {
+    const setupController = getSetupControllerInstance(c.env);
+    return setupController.setupDefaultPage(c);
+  });
+
   // Setup health check
   setupRouter.get("/health", (c) => {
     const setupController = getSetupControllerInstance(c.env);
@@ -194,6 +203,49 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
 
   // Mount setup routes
   v1Router.route("/setup", setupRouter);
+
+  // Pages routes (public)
+  const pagesRouter = new Hono<{ Bindings: AppEnv }>();
+
+  pagesRouter.get(":username", (c) => {
+    const controller = getPagesController(c.env);
+    return controller.getPublicProfile(c);
+  });
+
+  // Info
+  pagesRouter.get("/", (c) => {
+    return c.json({ ok: true, service: "Pages Service", version: "1.0.0", endpoints: { "GET /:username": "Public profile by username" } });
+  });
+
+  v1Router.route("/pages", pagesRouter);
+
+  // Public JSON for Edge Worker
+  const publicRouter = new Hono<{ Bindings: AppEnv }>();
+  publicRouter.get("/page/by-username/:username", (c) => {
+    const controller = getPagesController(c.env);
+    return controller.getPublicPageByUsername(c);
+  });
+  v1Router.route("/public", publicRouter);
+
+  // Me routes (protected)
+  const meRouter = new Hono<{ Bindings: AppEnv }>();
+  meRouter.get("/page", auth, (c) => {
+    const controller = getPagesController(c.env);
+    return controller.getMyPage(c);
+  });
+  meRouter.put("/page", auth, (c) => {
+    const controller = getPagesController(c.env);
+    return controller.updateMyPage(c);
+  });
+  meRouter.post("/links/bulk-upsert", auth, (c) => {
+    const controller = getPagesController(c.env);
+    return controller.replaceMyLinks(c);
+  });
+  meRouter.post("/publish", auth, (c) => {
+    const controller = getPagesController(c.env);
+    return controller.publish(c);
+  });
+  v1Router.route("/me", meRouter);
 
   // TODO: Add other route groups as they are migrated
   // v1Router.route("/pages", createPagesRouter(pagesController));

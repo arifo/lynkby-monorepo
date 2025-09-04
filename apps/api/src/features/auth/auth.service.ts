@@ -10,7 +10,7 @@ import {
   EmailValidationResult,
   DISPOSABLE_EMAIL_DOMAINS,
   AuthEvent
-} from "./auth.types";
+} from '@lynkby/shared';
 import { MAGIC_LINK_CONFIG } from "./auth.schemas";
 import { rateLimitService, rateLimitConfigs } from "../../core/services/rate-limit.service";
 import { tokenUtils } from "../../core/util/token.utils";

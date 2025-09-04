@@ -1,26 +1,10 @@
 import { BaseRepository } from "./base.repository";
 import type { AppEnv } from "../env";
-
-// User data types
-export interface CreateUserData {
-  email: string;
-  username?: string; // Make username optional for auth flow
-}
-
-export interface UpdateUserData {
-  email?: string;
-  username?: string;
-  lastLoginAt?: Date;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  username?: string; // Make username optional to match auth flow
-  createdAt: Date;
-  updatedAt: Date;
-  lastLoginAt?: Date; // Add lastLoginAt for auth tracking
-}
+import type { 
+  User, 
+  CreateUserData, 
+  UpdateUserData 
+} from '@lynkby/shared';
 
 // User repository interface
 export interface IUserRepository {
@@ -123,6 +107,21 @@ export class UserRepository extends BaseRepository implements IUserRepository {
       if (data.username !== undefined) {
         updates.push(`username = $${paramIndex++}`);
         params.push(data.username);
+      }
+
+      if (data.displayName !== undefined) {
+        updates.push(`"displayName" = $${paramIndex++}`);
+        params.push(data.displayName);
+      }
+
+      if (data.avatarUrl !== undefined) {
+        updates.push(`"avatarUrl" = $${paramIndex++}`);
+        params.push(data.avatarUrl);
+      }
+
+      if (data.bio !== undefined) {
+        updates.push(`bio = $${paramIndex++}`);
+        params.push(data.bio);
       }
 
       if (data.lastLoginAt !== undefined) {

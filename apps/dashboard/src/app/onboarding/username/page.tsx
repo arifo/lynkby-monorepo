@@ -51,7 +51,7 @@ function generateSuggestions(seed: string): string[] {
 
 export default function ChooseUsernamePage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, setupUsername } = useAuth();
 
   const [value, setValue] = useState("");
   const [status, setStatus] = useState<"idle" | "typing" | "checking" | "available" | "unavailable" | "error">("idle");
@@ -60,6 +60,7 @@ export default function ChooseUsernamePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const ariaLiveRef = useRef<HTMLDivElement>(null);
+  const isSubmittingRef = useRef(false);
 
   // Route guards
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function ChooseUsernamePage() {
     else console.log("Analytics: Onboarding Username Viewed", { auth_provider: "magic_link", ts: Date.now() });
   }, [isAuthenticated, router]);
   useEffect(() => {
-    if (user?.username) router.replace("/dashboard");
+    if (user?.username) router.replace("/onboarding/setup");
   }, [user?.username, router]);
 
   const seed = useMemo(() => {
@@ -148,6 +149,15 @@ export default function ChooseUsernamePage() {
     e.preventDefault();
     if (!isCTAEnabled || isSubmitting) return;
 
+    if (user?.username) {
+      router.replace("/onboarding/setup")
+      return;
+    }
+
+    // Prevent duplicate submissions
+    if (isSubmitting || isSubmittingRef.current) return;
+
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     setToast(null);
 
@@ -155,10 +165,15 @@ export default function ChooseUsernamePage() {
       console.log("Analytics: Username Claimed", { username_len: value.length, contains_dash: value.includes("-") });
       const res = await setupAPI.claimUsername(value);
       if (res.ok) {
+        // Update user state with new username
+        await setupUsername(value);
+
         console.log("Analytics: Onboarding Completed", { path: "username" });
-        // Navigate immediately on success
-        router.replace("/dashboard");
+
+        // Let the route guard handle the navigation after user state is updated
+        // The useEffect with user?.username dependency will trigger the redirect
       } else {
+        isSubmittingRef.current = false;
         setIsSubmitting(false);
         if (res.error?.includes("taken") || res.error?.includes("already")) {
           setStatus("unavailable");
@@ -169,6 +184,7 @@ export default function ChooseUsernamePage() {
         }
       }
     } catch {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
       setStatus("error");
       setHint("Something went wrong.");
@@ -181,7 +197,7 @@ export default function ChooseUsernamePage() {
       ariaLiveRef.current.textContent = status === "available" ? "Available" : "Taken";
     }
   }, [status]);
-
+  console.log("user", user);
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-md">

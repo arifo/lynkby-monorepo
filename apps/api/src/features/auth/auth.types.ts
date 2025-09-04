@@ -1,14 +1,2 @@
-// Re-export shared types
-export {
-  MagicLinkToken,
-  UserSession,
-  AuthUser,
-  MagicLinkEmailData,
-  RateLimitState,
-  AuthContext,
-  MagicLinkOptions,
-  SessionOptions,
-  AuthEvent,
-  EmailValidationResult,
-  DISPOSABLE_EMAIL_DOMAINS,
-} from '@lynkby/shared';
+// This file is no longer needed as we import directly from @lynkby/shared
+// Keeping for backward compatibility but all types should be imported from shared package

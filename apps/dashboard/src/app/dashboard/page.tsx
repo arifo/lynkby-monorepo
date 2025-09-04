@@ -7,15 +7,13 @@ import { useAuth } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Button } from "@/components/ui/button";
 import { Link as LinkIcon, BarChart3, Link, Settings, LogOut, User, Plus } from "lucide-react";
-import { pagesAPI, userAPI } from "@/lib/api";
+import { userAPI } from "@/lib/api";
 import { User as AuthUser } from "@/lib/auth";
 
 function DashboardContent() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState<null | AuthUser>(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await logout();
@@ -25,8 +23,8 @@ function DashboardContent() {
   useEffect(() => {
     const load = async () => {
       if (!user?.username) return;
-      setLoadingProfile(true);
-      setProfileError(null);
+      // setLoadingProfile(true);
+      // setProfileError(null);
       try {
         const res = await userAPI.getProfile();
         if (res.ok && res.user) {
@@ -34,10 +32,8 @@ function DashboardContent() {
         } else {
           setProfile(null);
         }
-      } catch (e) {
-        setProfileError("Failed to load profile");
-      } finally {
-        setLoadingProfile(false);
+      } catch {
+        console.error("Failed to load profile");
       }
     };
     load();
@@ -156,7 +152,7 @@ function DashboardContent() {
             <p className="text-gray-600 mb-4">
               Customize your link-in-bio page with themes and layouts.
             </p>
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={() => router.push('/dashboard/editor')}>
               <LinkIcon className="w-4 h-4 mr-2" />
               Customize Page
             </Button>

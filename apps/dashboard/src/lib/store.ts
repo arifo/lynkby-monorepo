@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AuthState, User, hasActiveSession, clearAuthCookies, setSessionFlag } from "./auth";
-import { authAPI, setupAPI } from "./api";
+import { authAPI } from "./api";
 
 interface AuthStore extends AuthState {
   login: (user: User) => void;
@@ -79,22 +79,12 @@ export const useAuthStore = create<AuthStore>()(
         const { user } = get();
         if (!user) throw new Error("No user logged in");
         
-        set({ isLoading: true });
-        
-        try {
-          const response = await setupAPI.claimUsername(username);
-          if (response.ok && response.user) {
-            setSessionFlag(true);
-            set({ 
-              user: { ...response.user, isNewUser: false }, 
-              isAuthenticated: true, 
-              isLoading: false 
-            });
-          }
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
+        // Update the user state with the new username
+        set({ 
+          user: { ...user, username: username.toLowerCase() }, 
+          isAuthenticated: true, 
+          isLoading: false 
+        });
       },
     }),
     {

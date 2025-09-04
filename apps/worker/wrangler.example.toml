@@ -1,7 +1,7 @@
 # Example Wrangler config for the Wildcard Worker
 # Copy to wrangler.toml and adjust values.
 
-name = "lynkby-worker"
+name = "lynkby-edge-worker"
 main = "src/index.ts"
 compatibility_date = "2025-08-01"
 compatibility_flags = ["nodejs_compat"]
@@ -11,7 +11,7 @@ compatibility_flags = ["nodejs_compat"]
 enabled = true
 
 [env.production]
-name = "lynkby-worker"
+name = "lynkby-edge-worker"
 
 [env.production.vars]
 # Base URL for the API Worker used to fetch public profile data

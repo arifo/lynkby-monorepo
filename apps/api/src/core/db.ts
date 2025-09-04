@@ -77,14 +77,14 @@ export class DatabaseClientFactory implements IDatabaseClientFactory {
   // Private method to get connection string from Hyperdrive
   private getConnectionString(env?: AppEnv ): string {
     if (env?.HYPERDRIVE?.connectionString && env.NODE_ENV === "production") {
-      console.log("getConnectionString databaseUrl from Hyperdrive", env.HYPERDRIVE.connectionString);
+      // console.log("getConnectionString databaseUrl from Hyperdrive", env.HYPERDRIVE.connectionString);
       return env.HYPERDRIVE.connectionString;
     }
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
       throw new Error("DATABASE_URL not configured. Please check your environment variables or Hyperdrive binding.");
     }
-    console.log("getConnectionString databaseUrl from DATABASE_URL", databaseUrl);
+    // console.log("getConnectionString databaseUrl from DATABASE_URL", databaseUrl);
     return databaseUrl;
   }
 }

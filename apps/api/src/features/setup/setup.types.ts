@@ -1,8 +1,2 @@
-// Re-export shared types and constants
-export {
-  UsernameValidationResult,
-  UsernameClaimResult,
-  SetupModuleConfig,
-  USERNAME_RULES,
-  USERNAME_ERRORS,
-} from '@lynkby/shared';
+// This file is no longer needed as we import directly from @lynkby/shared
+// Keeping for backward compatibility but all types should be imported from shared package

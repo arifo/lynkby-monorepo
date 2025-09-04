@@ -34,7 +34,7 @@
 	 */
   "vars": {
     "NODE_ENV": "development",
-    "APP_BASE": "http://localhost:8788",
+    "APP_BASE": "http://localhost:3001",
     "JWT_EXPIRES_IN": "7d",
     "EMAIL_FROM": "dev@lynkby.com",
     "SUPPORT_EMAIL": "dev-support@lynkby.com",

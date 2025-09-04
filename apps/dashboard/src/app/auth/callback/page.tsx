@@ -72,7 +72,7 @@ function AuthCallbackContent() {
             }, 500);
           } else {
             setStatus("error");
-            setError(response.error || "Invalid or expired magic link");
+            setError((response as { error?: string }).error || "Invalid or expired magic link");
           }
         } catch (err: unknown) {
           console.error("Magic link verification failed:", err);

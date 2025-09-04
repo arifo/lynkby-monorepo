@@ -8,6 +8,9 @@ const app = new Hono<{ Bindings: Bindings }>();
 // Health
 app.get('/_health', (c) => c.json({ ok: true }));
 
+// Robots.txt
+app.get('/robots.txt', (c) => c.text('User-agent: *\nAllow: /\n'));
+
 // Revalidate cache endpoint
 app.get('/_revalidate', async (c) => {
   const secret = c.req.query('secret');
@@ -20,7 +23,7 @@ app.get('/_revalidate', async (c) => {
 
 function extractSubdomainUsername(host: string): string | null {
   // Expecting something like username.lynkby.com
-  const RESERVED = new Set(['www','app','api','status','cdn','static']);
+  const RESERVED = new Set(['www','app','api','admin','support','blog','cdn','static','docs','pricing','status','dashboard','help','mail','dev','stage']);
   const parts = (host || '').split(':')[0].split('.');
   if (parts.length < 3) return null;
   const [sub] = parts;
@@ -43,7 +46,10 @@ async function renderUser(c: any, username: string) {
 app.get('/', async (c) => {
   const host = new URL(c.req.url).host;
   const username = extractSubdomainUsername(host);
-  if (!username) return c.json({ ok: false, error: 'not_subdomain' }, 404);
+  if (!username) {
+    // Return marketing landing for root domain
+    return c.html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lynkby</title><style>body{margin:0;font:16px/1.5 system-ui;-webkit-font-smoothing:antialiased;color:#111}main{max-width:720px;margin:10vh auto;padding:0 16px}a{color:#2563eb;text-decoration:none}</style><main><h1>Lynkby</h1><p>Create a beautiful link-in-bio in seconds.</p><p><a href="https://app.lynkby.com">Open Dashboard</a></p></main></html>`);
+  }
   return renderUser(c, username);
 });
 

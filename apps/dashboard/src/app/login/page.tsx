@@ -195,7 +195,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await authAPI.verifyCode(requestId, code);
-      if (response.ok && response.status === "completed") {
+      if (response.ok && (response as { status?: string }).status === "completed") {
         // Code verified, finalize login
         await finalizeLogin(requestId);
       } else {

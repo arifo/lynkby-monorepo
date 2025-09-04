@@ -1,43 +1,12 @@
 import { BaseRepository } from "./base.repository";
 import type { AppEnv } from "../env";
-
-// Page data types
-export interface CreatePageData {
-  userId: string;
-  displayName: string;
-  bio?: string;
-  avatarUrl?: string;
-}
-
-export interface UpdatePageData {
-  displayName?: string;
-  bio?: string;
-  avatarUrl?: string;
-}
-
-export interface Page {
-  id: string;
-  userId: string;
-  displayName: string;
-  bio?: string;
-  avatarUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PageWithLinks extends Page {
-  links: Link[];
-}
-
-export interface Link {
-  id: string;
-  pageId: string;
-  label: string;
-  url: string;
-  order: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { 
+  Page, 
+  CreatePageData, 
+  UpdatePageData, 
+  Link, 
+  PageWithLinks 
+} from '@lynkby/shared';
 
 // Page repository interface
 export interface IPageRepository {
@@ -50,6 +19,8 @@ export interface IPageRepository {
   findAll(): Promise<Page[]>;
   count(): Promise<number>;
   findWithLinks(id: string): Promise<PageWithLinks | null>;
+  insertLinks(pageId: string, links: Array<{ title: string; url: string; position?: number; active?: boolean }>): Promise<number>;
+  replaceLinks(pageId: string, links: Array<{ title: string; url: string; position?: number; active?: boolean }>): Promise<number>;
 }
 
 // Page repository implementation
@@ -62,14 +33,14 @@ export class PageRepository extends BaseRepository implements IPageRepository {
       await client.connect();
       
       const sql = `
-        INSERT INTO "pages" (id, "userId", "displayName", bio, "avatarUrl", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO "pages" (id, "userId", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4)
         RETURNING *
       `;
       
       const id = `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const now = new Date();
-      const params = [id, data.userId, data.displayName, data.bio, data.avatarUrl, now, now];
+      const params = [id, data.userId, now, now];
       
       const { rows } = await client.query(sql, params);
       return rows[0] as Page;
@@ -135,19 +106,19 @@ export class PageRepository extends BaseRepository implements IPageRepository {
       const params: any[] = [];
       let paramIndex = 1;
 
-      if (data.displayName !== undefined) {
-        updates.push(`"displayName" = $${paramIndex++}`);
-        params.push(data.displayName);
+      if (data.layout !== undefined) {
+        updates.push(`layout = $${paramIndex++}`);
+        params.push(data.layout);
       }
 
-      if (data.bio !== undefined) {
-        updates.push(`bio = $${paramIndex++}`);
-        params.push(data.bio);
+      if (data.theme !== undefined) {
+        updates.push(`theme = $${paramIndex++}`);
+        params.push(data.theme);
       }
 
-      if (data.avatarUrl !== undefined) {
-        updates.push(`"avatarUrl" = $${paramIndex++}`);
-        params.push(data.avatarUrl);
+      if (data.published !== undefined) {
+        updates.push(`published = $${paramIndex++}`);
+        params.push(data.published);
       }
 
       updates.push(`"updatedAt" = $${paramIndex++}`);
@@ -227,7 +198,7 @@ export class PageRepository extends BaseRepository implements IPageRepository {
       const page = pageRows[0] as Page;
       
       // Then get the links for this page
-      const linksSql = `SELECT * FROM "links" WHERE "pageId" = $1 ORDER BY "order" ASC`;
+      const linksSql = `SELECT * FROM "links" WHERE "pageId" = $1 ORDER BY position ASC`;
       const { rows: linkRows } = await client.query(linksSql, [id]);
       
       const links = linkRows as Link[];
@@ -236,6 +207,64 @@ export class PageRepository extends BaseRepository implements IPageRepository {
         ...page,
         links,
       };
+    } finally {
+      await this.closeClient(client);
+    }
+  }
+
+  async insertLinks(pageId: string, links: Array<{ title: string; url: string; position?: number; active?: boolean }>): Promise<number> {
+    if (!links.length) return 0;
+    const client = this.getClient();
+    try {
+      await client.connect();
+      let inserted = 0;
+      for (let i = 0; i < links.length; i++) {
+        const l = links[i];
+        const sql = `
+          INSERT INTO "links" (id, "pageId", title, url, position, active, "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `;
+        const id = `link_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        const now = new Date();
+        const position = l.position ?? i;
+        const active = l.active ?? true;
+        await client.query(sql, [id, pageId, l.title, l.url, position, active, now, now]);
+        inserted++;
+      }
+      return inserted;
+    } finally {
+      await this.closeClient(client);
+    }
+  }
+
+  async replaceLinks(pageId: string, links: Array<{ title: string; url: string; position?: number; active?: boolean }>): Promise<number> {
+    const client = this.getClient();
+    try {
+      await client.connect();
+      await client.query('BEGIN');
+
+      await client.query(`DELETE FROM "links" WHERE "pageId" = $1`, [pageId]);
+
+      let inserted = 0;
+      for (let i = 0; i < links.length; i++) {
+        const l = links[i];
+        const sql = `
+          INSERT INTO "links" (id, "pageId", title, url, position, active, "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `;
+        const id = `link_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        const now = new Date();
+        const position = l.position ?? i;
+        const active = l.active ?? true;
+        await client.query(sql, [id, pageId, l.title, l.url, position, active, now, now]);
+        inserted++;
+      }
+
+      await client.query('COMMIT');
+      return inserted;
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      throw e;
     } finally {
       await this.closeClient(client);
     }

@@ -14,7 +14,7 @@ export type {
 export type { 
   UsernameValidationResult, 
   UsernameClaimResult 
-} from "./setup.types";
+} from '@lynkby/shared';
 
 // Export schemas
 export { 

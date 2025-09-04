@@ -1,57 +1,11 @@
 import { BaseRepository } from "./base.repository";
-
-// Auth-related data types
-export interface MagicLinkToken {
-  id: string;
-  email: string;
-  tokenHash: string;
-  createdAt: Date;
-  expiresAt: Date;
-  usedAt?: Date;
-  ipCreatedFrom?: string;
-  uaCreatedFrom?: string;
-  redirectPath?: string;
-}
-
-export interface UserSession {
-  id: string;
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-  createdAt: Date;
-  lastUsedAt: Date;
-  revokedAt?: Date;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface CreateMagicLinkTokenData {
-  id: string;
-  email: string;
-  tokenHash: string;
-  createdAt: Date;
-  expiresAt: Date;
-  ipCreatedFrom?: string;
-  uaCreatedFrom?: string;
-  redirectPath?: string;
-}
-
-export interface CreateUserSessionData {
-  id: string;
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-  createdAt: Date;
-  lastUsedAt: Date;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface UpdateSessionData {
-  lastUsedAt?: Date;
-  expiresAt?: Date;
-  revokedAt?: Date;
-}
+import type { 
+  MagicLinkToken,
+  UserSession,
+  CreateMagicLinkTokenData,
+  CreateUserSessionData,
+  UpdateSessionData
+} from '@lynkby/shared';
 
 // Auth repository interface
 export interface IAuthRepository {
@@ -84,9 +38,9 @@ export class AuthRepository extends BaseRepository implements IAuthRepository {
       const sql = `
         INSERT INTO "magic_link_tokens" (id, email, "tokenHash", "createdAt", "expiresAt", "ipCreatedFrom", "uaCreatedFrom", "redirectPath")
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT ("tokenHash") DO UPDATE SET
+        ON CONFLICT (email) DO UPDATE SET
           id = EXCLUDED.id,
-          email = EXCLUDED.email,
+          "tokenHash" = EXCLUDED."tokenHash",
           "expiresAt" = EXCLUDED."expiresAt",
           "createdAt" = EXCLUDED."createdAt",
           "ipCreatedFrom" = EXCLUDED."ipCreatedFrom",

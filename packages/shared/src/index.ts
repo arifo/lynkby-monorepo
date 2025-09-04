@@ -49,6 +49,8 @@ export * from './types/setup';
 export * from './types/login-request';
 export * from './types/token';
 export * from './types/common';
+export * from './types/pages';
+export * from './types/repository';
 
 // Utils
 export * from './utils/token';
