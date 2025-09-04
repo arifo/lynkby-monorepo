@@ -26,6 +26,57 @@ export interface PageData {
   fallbackUrl?: string;
 }
 
+// Dashboard summary response
+export interface DashboardSummary {
+  username: string;
+  liveUrl: string;
+  fallbackUrl: string;
+  profile: {
+    displayName?: string;
+    avatarUrl?: string;
+    bio?: string;
+  };
+  page: {
+    theme: string;
+    published: boolean;
+    viewsAllTime: number;
+    updatedAt: string;
+  };
+  links: {
+    count: number;
+  };
+  setup: {
+    firstSaveCompleted: boolean;
+    checklist: {
+      displayNameAvatar: { done: boolean; ts: string | null };
+      addLinks3Plus: { done: boolean; ts: string | null };
+      chooseTheme: { done: boolean; ts: string | null };
+      addBio: { done: boolean; ts: string | null };
+      copyLinkToTikTok: { done: boolean; ts: string | null };
+    };
+  };
+  plan: string;
+}
+
+
+// Checklist item update request
+export interface ChecklistUpdateRequest {
+  key: string;
+  done: boolean;
+}
+
+// Checklist item update response
+export interface ChecklistUpdateResponse {
+  ok: boolean;
+  checklist: {
+    displayNameAvatar: { done: boolean; ts: string | null };
+    addLinks3Plus: { done: boolean; ts: string | null };
+    chooseTheme: { done: boolean; ts: string | null };
+    addBio: { done: boolean; ts: string | null };
+    copyLinkToTikTok: { done: boolean; ts: string | null };
+  };
+}
+
 // Public profile data for unauthenticated access
 export interface PublicProfileData {
   ok: boolean;
@@ -99,6 +150,7 @@ export interface IPagesService {
     order?: number 
   }>): Promise<{ ok: boolean; count: number; error?: string }>;
   publish(userId: string): Promise<{ ok: boolean }>;
+  getSummary(userId: string): Promise<{ ok: boolean; data?: DashboardSummary; error?: string }>;
 }
 
 // Page controller interfaces
@@ -109,4 +161,5 @@ export interface IPagesController {
   updateMyPage(c: any): Promise<Response>;
   replaceMyLinks(c: any): Promise<Response>;
   publish(c: any): Promise<Response>;
+  getSummary(c: any): Promise<Response>;
 }

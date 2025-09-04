@@ -5,7 +5,8 @@ import {
   UsernameValidationResult,
   UsernameClaimResult,
   USERNAME_RULES,
-  USERNAME_ERRORS
+  USERNAME_ERRORS,
+  SetupState
 } from '@lynkby/shared';
 import { BaseService } from "../../core/services/base.service";
 import type { AppEnv } from "../../core/env";
@@ -187,6 +188,95 @@ export class SetupService extends BaseService implements ISetupService {
     logger.info("Default links inserted", { pageId: page.id });
 
     return { created: true, pageId: page.id, username };
+  }
+
+  async markFirstSaveCompleted(userId: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const setupState = await this.getOrCreateSetupState(userId);
+      await this.updateSetupState(userId, { firstSaveCompleted: true });
+      logger.logAPI("FIRST_SAVE_COMPLETED", `user:${userId}`, { userId });
+      return { ok: true };
+    } catch (error) {
+      logger.error("markFirstSaveCompleted: Failed to mark first save completed", { userId, error });
+      return { ok: false, error: "Failed to mark first save completed" };
+    }
+  }
+
+  async updateChecklistItem(userId: string, key: string, done: boolean): Promise<{ ok: boolean; checklist?: SetupState['checklist']; error?: string }> {
+    try {
+      const setupState = await this.getOrCreateSetupState(userId);
+      const updatedChecklist = {
+        ...setupState.checklist,
+        [key]: {
+          done,
+          ts: done ? new Date().toISOString() : null
+        }
+      };
+      
+      await this.updateSetupState(userId, { checklist: updatedChecklist });
+      logger.logAPI("CHECKLIST_UPDATED", `user:${userId}`, { userId, key, done });
+      return { ok: true, checklist: updatedChecklist };
+    } catch (error) {
+      logger.error("updateChecklistItem: Failed to update checklist item", { userId, key, done, error });
+      return { ok: false, error: "Failed to update checklist item" };
+    }
+  }
+
+  async getOrCreateSetupState(userId: string): Promise<SetupState> {
+    // This would need to be implemented with a setup state repository
+    // For now, return a default state
+    const now = new Date();
+    return {
+      id: `temp-${userId}`,
+      userId,
+      firstSaveCompleted: false,
+      checklist: {
+        displayNameAvatar: { done: false, ts: null },
+        addLinks3Plus: { done: false, ts: null },
+        chooseTheme: { done: false, ts: null },
+        addBio: { done: false, ts: null },
+        copyLinkToTikTok: { done: false, ts: null }
+      },
+      createdAt: now,
+      updatedAt: now
+    };
+  }
+
+  private async updateSetupState(userId: string, updates: Partial<SetupState>): Promise<void> {
+    // This would need to be implemented with a setup state repository
+    // For now, just log the update
+    logger.info("Setup state updated", { userId, updates });
+  }
+
+  autoCheckChecklistItems(data: {
+    displayName?: string;
+    avatarUrl?: string;
+    bio?: string;
+    linksCount: number;
+    theme: string;
+  }, currentChecklist: SetupState['checklist']): SetupState['checklist'] {
+    return {
+      displayNameAvatar: {
+        done: currentChecklist.displayNameAvatar?.done || !!(data.displayName || data.avatarUrl),
+        ts: currentChecklist.displayNameAvatar?.ts || null
+      },
+      addLinks3Plus: {
+        done: currentChecklist.addLinks3Plus?.done || data.linksCount >= 3,
+        ts: currentChecklist.addLinks3Plus?.ts || null
+      },
+      chooseTheme: {
+        done: currentChecklist.chooseTheme?.done || data.theme !== "classic",
+        ts: currentChecklist.chooseTheme?.ts || null
+      },
+      addBio: {
+        done: currentChecklist.addBio?.done || !!(data.bio && data.bio.length >= 20),
+        ts: currentChecklist.addBio?.ts || null
+      },
+      copyLinkToTikTok: {
+        done: currentChecklist.copyLinkToTikTok?.done || false,
+        ts: currentChecklist.copyLinkToTikTok?.ts || null
+      }
+    };
   }
 }
 

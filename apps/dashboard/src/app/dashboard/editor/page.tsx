@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { pagesAPI } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type LinkItem = { id?: string; title: string; url: string; active: boolean; position?: number };
 
@@ -118,6 +119,8 @@ export default function EditorPage() {
 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [firstSaveCompleted, setFirstSaveCompleted] = useState(false);
 
   const saveAll = async () => {
     if (!validateLinks()) {
@@ -138,7 +141,25 @@ export default function EditorPage() {
       }));
       await pagesAPI.bulkUpsertLinks(normalized);
       await pagesAPI.publish();
-      setSaveMsg("Saved. Changes appear within ~60s.");
+
+      // Mark first save as completed and show success modal
+      if (!firstSaveCompleted) {
+        try {
+          await pagesAPI.markFirstSaveCompleted();
+          setFirstSaveCompleted(true);
+          setShowSuccessModal(true);
+          // Auto-hide modal after 10 seconds
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            router.push("/dashboard/home");
+          }, 10000);
+        } catch (err) {
+          console.error("Failed to mark first save completed:", err);
+          setSaveMsg("Saved. Changes appear within ~60s.");
+        }
+      } else {
+        setSaveMsg("Saved. Changes appear within ~60s.");
+      }
     } catch (e: unknown) {
       setSaveMsg((e as { response?: { data?: { error?: string } } })?.response?.data?.error || "Save failed. Please check fields and retry.");
     } finally {
@@ -312,6 +333,63 @@ export default function EditorPage() {
           </div>
         )}
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your page is live!</h2>
+              <p className="text-gray-600 mb-4">
+                <button
+                  className="text-blue-600 hover:underline"
+                  onClick={() => navigator.clipboard.writeText(liveUrl!)}
+                >
+                  {liveUrl}
+                </button>
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(liveUrl!);
+                    setShowSuccessModal(false);
+                    router.push("/dashboard/home");
+                  }}
+                  className="flex-1"
+                >
+                  Copy Link
+                </Button>
+                <Button
+                  onClick={() => {
+                    window.open(liveUrl, "_blank");
+                    setShowSuccessModal(false);
+                    router.push("/dashboard/home");
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Open Live Page
+                </Button>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push("/dashboard/home");
+                }}
+                variant="ghost"
+                className="mt-3 w-full"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ model User {
   magicLinkTokens MagicLinkToken[]
   page            Page?
   sessions        UserSession[]
+  setup           SetupState?
 
   @@map("users")
 }
@@ -120,4 +121,17 @@ model LoginRequest {
   @@index([status, expiresAt], map: "login_requests_status_expires_idx")
   @@index([userId], map: "login_requests_userId_idx")
   @@index([email], map: "login_requests_email_idx")
+}
+
+model SetupState {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstSaveCompleted    Boolean  @default(false)
+  checklist             Json     @default("{}")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("setup_states")
+  @@index([userId], map: "setup_states_userId_idx")
 }

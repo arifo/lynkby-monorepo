@@ -18,6 +18,7 @@ export interface User extends BaseEntity {
   avatarUrl?: string;
   bio?: string;
   lastLoginAt?: Date;
+  plan?: string;
 }
 
 // User creation data
@@ -69,6 +70,19 @@ export interface Link extends BaseEntity {
 // Page with links interface
 export interface PageWithLinks extends Page {
   links: Link[];
+}
+
+// Setup state entity interface
+export interface SetupState extends BaseEntity {
+  userId: string;
+  firstSaveCompleted: boolean;
+  checklist: {
+    displayNameAvatar: { done: boolean; ts: string | null };
+    addLinks3Plus: { done: boolean; ts: string | null };
+    chooseTheme: { done: boolean; ts: string | null };
+    addBio: { done: boolean; ts: string | null };
+    copyLinkToTikTok: { done: boolean; ts: string | null };
+  };
 }
 
 // API response wrapper

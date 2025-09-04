@@ -13,7 +13,9 @@ import type {
   ErrorResponse,
   ApiResponse,
   PageData,
-  PublicProfileData
+  PublicProfileData,
+  DashboardSummary,
+  ChecklistUpdateResponse
 } from '@lynkby/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -182,6 +184,21 @@ export const pagesAPI = {
   
   getPublic: async (username: string): Promise<PublicProfileData> => {
     const response = await api.get(`/v1/pages/${encodeURIComponent(username)}`);
+    return response.data;
+  },
+
+  getSummary: async (): Promise<DashboardSummary> => {
+    const response = await api.get("/v1/me/summary");
+    return response.data;
+  },
+
+  markFirstSaveCompleted: async (): Promise<SuccessResponse | ErrorResponse> => {
+    const response = await api.post("/v1/setup/first-save", {});
+    return response.data;
+  },
+
+  updateChecklistItem: async (key: string, done: boolean): Promise<ChecklistUpdateResponse> => {
+    const response = await api.post("/v1/setup/checklist", { key, done });
     return response.data;
   },
 };

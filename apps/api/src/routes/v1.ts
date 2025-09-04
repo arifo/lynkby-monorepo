@@ -173,6 +173,15 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
     return setupController.setupDefaultPage(c);
   });
 
+    setupRouter.post("/first-save", auth, (c) => {
+      const controller = getPagesController(c.env);
+      return controller.markFirstSaveCompleted(c);
+    });
+    setupRouter.post("/checklist", auth, (c) => {
+      const controller = getPagesController(c.env);
+      return controller.updateChecklistItem(c);
+    });
+
   // Setup health check
   setupRouter.get("/health", (c) => {
     const setupController = getSetupControllerInstance(c.env);
@@ -188,6 +197,9 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
       endpoints: {
         "GET /check-username": "Check if username is available",
         "POST /claim-username": "Claim a username for authenticated user",
+        "POST /page": "Setup default page for authenticated user",
+        "POST /first-save": "Mark first save completed for authenticated user",
+        "POST /checklist": "Update checklist item for authenticated user",
         "GET /health": "Service health check",
       },
       features: [
@@ -244,6 +256,10 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
   meRouter.post("/publish", auth, (c) => {
     const controller = getPagesController(c.env);
     return controller.publish(c);
+  });
+  meRouter.get("/summary", auth, (c) => {
+    const controller = getPagesController(c.env);
+    return controller.getSummary(c);
   });
   v1Router.route("/me", meRouter);
 

@@ -205,6 +205,39 @@ export class SetupController implements ISetupController {
     }
   }
 
+  async markFirstSaveCompleted(c: Context): Promise<Response> {
+    this.setEnvironment(c);
+    const userId = c.get("userId");
+    const result = await this.setupService.markFirstSaveCompleted(userId);
+    if (!result.ok) {
+      if (result.error) {
+        return c.json({ ok: false, error: result.error }, 400);
+      }
+      return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+    }
+    return c.json({ ok: true });
+  }
+
+  async updateChecklistItem(c: Context): Promise<Response> {
+    this.setEnvironment(c);
+    const userId = c.get("userId");
+    const body = await c.req.json();
+    const { key, done } = body ?? {};
+    
+    if (!key || typeof done !== 'boolean') {
+      return c.json({ ok: false, error: "Invalid request body" }, 400);
+    }
+
+    const result = await this.setupService.updateChecklistItem(userId, key, done);
+    if (!result.ok) {
+      if (result.error) {
+        return c.json({ ok: false, error: result.error }, 400);
+      }
+      return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+    }
+    return c.json({ ok: true, checklist: result.checklist });
+  }
+
   // Health check for setup service
   async healthCheck(c: Context): Promise<Response> {
     try {

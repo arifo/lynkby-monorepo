@@ -7,7 +7,8 @@ import type {
   CreatePageData, 
   UpdatePageData, 
   Link, 
-  PageWithLinks
+  PageWithLinks,
+  SetupState
 } from './common';
 import type { 
   MagicLinkToken,
@@ -73,6 +74,39 @@ export interface IUserRepository {
   updateLastLogin(userId: string): Promise<void>;
 }
 
+// Setup state creation data
+export interface CreateSetupStateData {
+  userId: string;
+  firstSaveCompleted?: boolean;
+  checklist?: {
+    displayNameAvatar: { done: boolean; ts: string | null };
+    addLinks3Plus: { done: boolean; ts: string | null };
+    chooseTheme: { done: boolean; ts: string | null };
+    addBio: { done: boolean; ts: string | null };
+    copyLinkToTikTok: { done: boolean; ts: string | null };
+  };
+}
+
+// Setup state update data
+export interface UpdateSetupStateData {
+  firstSaveCompleted?: boolean;
+  checklist?: {
+    displayNameAvatar: { done: boolean; ts: string | null };
+    addLinks3Plus: { done: boolean; ts: string | null };
+    chooseTheme: { done: boolean; ts: string | null };
+    addBio: { done: boolean; ts: string | null };
+    copyLinkToTikTok: { done: boolean; ts: string | null };
+  };
+}
+
+// Setup state repository interface
+export interface ISetupStateRepository {
+  create(data: CreateSetupStateData): Promise<SetupState>;
+  findByUserId(userId: string): Promise<SetupState | null>;
+  update(userId: string, data: UpdateSetupStateData): Promise<SetupState>;
+  delete(userId: string): Promise<void>;
+}
+
 // Auth repository interfaces
 export interface IAuthRepository {
   // Magic link token operations
@@ -100,7 +134,8 @@ export type {
   CreatePageData, 
   UpdatePageData, 
   Link, 
-  PageWithLinks
+  PageWithLinks,
+  SetupState
 } from './common';
 export type { 
   MagicLinkToken,

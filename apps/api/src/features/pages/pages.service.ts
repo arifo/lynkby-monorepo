@@ -3,7 +3,7 @@ import { pageRepository, userRepository } from "../../core/repositories";
 import { logger } from "../../core/util/logger";
 import { validateUrl, validateLinkTitle, validateTheme, validateLinksCount, validateDisplayName, validateBio } from "../../core/util/validation";
 import type { IPagesService } from "./pages.interfaces";
-import type { Profile } from "@lynkby/shared";
+import type { Profile, DashboardSummary, SetupState } from "@lynkby/shared";
 
 export class PagesService extends BaseService implements IPagesService {
   async getPublicProfileByUsername(username: string): Promise<{ ok: boolean; profile?: Profile }> {
@@ -227,6 +227,64 @@ export class PagesService extends BaseService implements IPagesService {
     // Ensure published and touch updatedAt
     await pageRepository.update(page.id, { published: true });
     return { ok: true };
+  }
+
+  async getSummary(userId: string): Promise<{ ok: boolean; data?: DashboardSummary; error?: string }> {
+    userRepository.setEnvironment(this.getEnv());
+    pageRepository.setEnvironment(this.getEnv());
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      logger.error("getSummary: User not found", { userId });
+      return { ok: false, error: "User not found" };
+    }
+
+    const page = await pageRepository.findByUserId(userId);
+    if (!page) {
+      logger.error("getSummary: Page not found for user", { userId, userEmail: user.email });
+      return { ok: false, error: "Page not found" };
+    }
+
+    const withLinks = await pageRepository.findWithLinks(page.id);
+    const links = withLinks?.links || [];
+
+    const username = user.username || "";
+    const liveUrl = username ? `https://${username}.lynkby.com` : "";
+    const fallbackUrl = username ? `https://lynkby.com/u/${username}` : "";
+
+   
+    const summary = {
+      username,
+      liveUrl,
+      fallbackUrl,
+      profile: {
+        displayName: user.displayName || undefined,
+        avatarUrl: user.avatarUrl || undefined,
+        bio: user.bio || undefined,
+      },
+      page: {
+        theme: page.theme || "classic",
+        published: page.published !== false,
+        viewsAllTime: page.viewsAllTime || 0,
+        updatedAt: page.updatedAt.toISOString(),
+      },
+      links: {
+        count: links.length,
+      },
+      setup: {
+        firstSaveCompleted: false,
+        checklist: {
+          displayNameAvatar: { done: false, ts: null },
+          addLinks3Plus: { done: false, ts: null },
+          chooseTheme: { done: false, ts: null },
+          addBio: { done: false, ts: null },
+          copyLinkToTikTok: { done: false, ts: null },
+        },
+      },
+      plan: user.plan || "FREE",
+    };
+
+    return { ok: true, data: summary };
   }
 }
 

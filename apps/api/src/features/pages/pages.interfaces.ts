@@ -9,7 +9,10 @@ export interface IPagesService extends SharedIPagesService {
   setEnvironment(env: AppEnv): void;
 }
 
-export interface IPagesController extends SharedIPagesController {}
+export interface IPagesController extends SharedIPagesController {
+  markFirstSaveCompleted(c: any): Promise<Response>;
+  updateChecklistItem(c: any): Promise<Response>;
+}
 
 export interface PagesModuleConfig {
   // placeholder for future options (themes, etc.)
