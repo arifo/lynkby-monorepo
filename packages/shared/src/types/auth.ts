@@ -1,15 +1,16 @@
-// Magic link token interface
-export interface MagicLinkToken {
+// OTP token interface
+export interface OtpToken {
   id: string;
   email: string;
-  tokenHash: string; // Only store hashed tokens
+  codeHash: string; // Only store hashed codes
   createdAt: Date;
   expiresAt: Date;
-  usedAt?: Date; // Track when token was consumed
-  ipCreatedFrom?: string; // IP address where token was created
-  uaCreatedFrom?: string; // User agent where token was created
-  redirectPath?: string; // Where to redirect after verification
+  consumedAt?: Date; // Track when code was consumed
+  attempts: number; // Track failed attempts
+  ipCreatedFrom?: string; // IP address where code was created
+  uaCreatedFrom?: string; // User agent where code was created
 }
+
 
 // User session interface
 export interface UserSession {
@@ -59,13 +60,6 @@ export interface AuthContext {
   session: UserSession;
 }
 
-// Magic link generation options
-export interface MagicLinkOptions {
-  email: string;
-  ttlMinutes?: number;
-  ipAddress?: string;
-  userAgent?: string;
-}
 
 // Session creation options
 export interface SessionOptions {
@@ -77,7 +71,7 @@ export interface SessionOptions {
 
 // Auth event logging interface
 export interface AuthEvent {
-  type: 'magic_link_requested' | 'magic_link_delivered' | 'magic_link_consumed' | 'magic_link_failed' | 'session_created' | 'session_revoked' | 'user_login' | 'user_logout';
+  type: 'otp_requested' | 'otp_delivered' | 'otp_verified' | 'otp_failed' | 'session_created' | 'session_revoked' | 'user_login' | 'user_logout';
   userId?: string;
   email?: string;
   ipAddress?: string;
@@ -91,4 +85,43 @@ export interface EmailValidationResult {
   isValid: boolean;
   isDisposable: boolean;
   reason?: string;
+}
+
+// CSRF token interface
+export interface CsrfToken {
+  token: string;
+  expiresAt: Date;
+}
+
+// OTP request/response types
+export interface OtpRequestResult {
+  ok: boolean;
+  cooldown?: number; // seconds until next request allowed
+  error?: string;
+}
+
+export interface OtpVerificationResult {
+  ok: boolean;
+  user?: AuthUser;
+  session?: {
+    expiresAt: string;
+    maxAge: number;
+  };
+  error?: string;
+}
+
+// OTP generation options
+export interface OtpOptions {
+  email: string;
+  ttlMinutes?: number;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+// OTP verification options
+export interface OtpVerificationOptions {
+  email: string;
+  code: string;
+  ipAddress?: string;
+  userAgent?: string;
 }

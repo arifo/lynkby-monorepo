@@ -29,7 +29,7 @@ export interface AuthContext {
 // Authentication middleware (required) - Cookie-based
 export const auth = async (c: Context<{ Bindings: AppEnv }>, next: Next): Promise<void> => {
   // Get session token from cookie
-  const sessionToken = getCookie(c, "session_token");
+  const sessionToken = getCookie(c, "lb_sess");
   
   if (!sessionToken) {
     throw createError.unauthorized("No active session found");
@@ -63,7 +63,7 @@ export const auth = async (c: Context<{ Bindings: AppEnv }>, next: Next): Promis
 // Optional authentication middleware - Cookie-based
 export const optionalAuth = async (c: Context<{ Bindings: AppEnv }>, next: Next): Promise<void> => {
   // Get session token from cookie
-  const sessionToken = getCookie(c, "session_token");
+  const sessionToken = getCookie(c, "lb_sess");
   
   if (sessionToken) {
     const env = c.env;

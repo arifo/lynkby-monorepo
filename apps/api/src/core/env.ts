@@ -19,10 +19,19 @@ const EnvSchema = z.object({
   TIKTOK_CLIENT_SECRET: z.string().optional(),
   
   // Email provider (Resend)
-  RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().email().optional(),
+  RESEND_API_KEY: z.string().min(1, "Resend API key is required for OTP emails"),
+  EMAIL_FROM: z.string().email().default("noreply@lynkby.com"),
   SUPPORT_EMAIL: z.string().email().optional(),
-  APP_NAME: z.string().optional(),
+  APP_NAME: z.string().default("Lynkby"),
+  
+  // OTP configuration
+  OTP_CODE_LENGTH: z.number().min(4).max(8).default(6),
+  OTP_TTL_MINUTES: z.number().min(1).max(60).default(10),
+  OTP_MAX_ATTEMPTS: z.number().min(1).max(10).default(5),
+  OTP_RESEND_COOLDOWN_SECONDS: z.number().min(10).max(300).default(30),
+  
+  // CSRF configuration
+  CSRF_SECRET: z.string().min(32, "CSRF secret must be at least 32 characters").optional(),
 });
 
 export type EnvVars = z.infer<typeof EnvSchema>;

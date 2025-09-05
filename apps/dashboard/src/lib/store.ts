@@ -79,9 +79,9 @@ export const useAuthStore = create<AuthStore>()(
         const { user } = get();
         if (!user) throw new Error("No user logged in");
         
-        // Update the user state with the new username
+        // Update the user state with the new username and clear isNewUser flag
         set({ 
-          user: { ...user, username: username.toLowerCase() }, 
+          user: { ...user, username: username.toLowerCase(), isNewUser: false }, 
           isAuthenticated: true, 
           isLoading: false 
         });

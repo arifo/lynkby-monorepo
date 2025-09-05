@@ -3,19 +3,16 @@ import type {
   UsernameAvailabilityResponse, 
   UsernameClaimResponse,
   SessionResponse,
-  MagicLinkResponse,
   AuthErrorResponse,
-  LoginRequestResponse,
-  WaitResponse,
-  FinalizeResponse,
-  LoginRequestErrorResponse,
   SuccessResponse,
   ErrorResponse,
   ApiResponse,
   PageData,
   PublicProfileData,
   DashboardSummary,
-  ChecklistUpdateResponse
+  ChecklistUpdateResponse,
+  OtpRequestResponse,
+  OtpVerificationResponse
 } from '@lynkby/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -30,11 +27,16 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor for cookie-based authentication
+// Request interceptor for cookie-based authentication and CSRF
 api.interceptors.request.use(
   (config) => {
-    // Pure cookie-based auth - no need to add Authorization headers
-    // Cookies are automatically sent with withCredentials: true
+    // Add CSRF token to requests
+    const cookies = document.cookie.split(';');
+    const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('lb_csrf='));
+    if (csrfCookie) {
+      const token = csrfCookie.split('=')[1];
+      config.headers['X-CSRF-Token'] = token;
+    }
     return config;
   },
   (error) => {
@@ -57,20 +59,29 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  // Request magic link - matches API worker endpoint
-  sendMagicLink: async (email: string, redirectPath?: string): Promise<MagicLinkResponse | AuthErrorResponse> => {
-    const response = await api.post("/v1/auth/request-link", { 
-      email,
-      redirectPath: redirectPath
+  // OTP endpoints (new authentication method)
+  requestOtp: async (email: string): Promise<OtpRequestResponse | AuthErrorResponse> => {
+    const response = await api.post("/v1/auth/otp/request", { 
+      email
     });
     return response.data;
   },
   
-  // Verify magic link - matches API worker endpoint
-  verifyMagicLink: async (token: string): Promise<SessionResponse | AuthErrorResponse> => {
-    const response = await api.get(`/v1/auth/verify?token=${encodeURIComponent(token)}`);
+  verifyOtp: async (email: string, code: string): Promise<OtpVerificationResponse | AuthErrorResponse> => {
+    const response = await api.post("/v1/auth/otp/verify", { 
+      email,
+      code
+    });
     return response.data;
   },
+  
+  resendOtp: async (email: string): Promise<OtpRequestResponse | AuthErrorResponse> => {
+    const response = await api.post("/v1/auth/otp/resend", { 
+      email
+    });
+    return response.data;
+  },
+
   
   // Get current user - matches API worker endpoint
   getCurrentUser: async (): Promise<SessionResponse | AuthErrorResponse> => {
@@ -84,35 +95,6 @@ export const authAPI = {
     return response.data;
   },
 
-  // Handoff pattern endpoints
-  createLoginRequest: async (email: string, redirectPath?: string): Promise<LoginRequestResponse | LoginRequestErrorResponse> => {
-    const response = await api.post("/v1/auth/request", { 
-      email,
-      redirectPath
-    });
-    return response.data;
-  },
-
-  waitForLoginRequest: async (requestId: string): Promise<WaitResponse | LoginRequestErrorResponse> => {
-    const response = await api.get(`/v1/auth/wait?requestId=${encodeURIComponent(requestId)}`);
-    return response.data;
-  },
-
-  finalizeLoginRequest: async (requestId: string, handshakeNonce: string): Promise<FinalizeResponse | LoginRequestErrorResponse> => {
-    const response = await api.post("/v1/auth/finalize", {
-      requestId,
-      handshakeNonce
-    });
-    return response.data;
-  },
-
-  verifyCode: async (requestId: string, code: string): Promise<SuccessResponse | LoginRequestErrorResponse> => {
-    const response = await api.post("/v1/auth/verify-code", {
-      requestId,
-      code
-    });
-    return response.data;
-  },
 };
 
 export const setupAPI = {

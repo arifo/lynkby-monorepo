@@ -65,7 +65,7 @@ export default function ChooseUsernamePage() {
   // Route guards
   useEffect(() => {
     if (!isAuthenticated) router.replace("/login");
-    else console.log("Analytics: Onboarding Username Viewed", { auth_provider: "magic_link", ts: Date.now() });
+    else console.log("Analytics: Onboarding Username Viewed", { auth_provider: "otp", ts: Date.now() });
   }, [isAuthenticated, router]);
   useEffect(() => {
     if (user?.username) router.replace("/onboarding/setup");

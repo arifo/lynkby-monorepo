@@ -63,8 +63,8 @@ curl http://localhost:3001
 1. **Open Dashboard**: Navigate to `http://localhost:3001`
 2. **Click Login**: Go to `/login` page
 3. **Enter Email**: Use a real email address
-4. **Check Email**: Look for magic link (if email service configured)
-5. **Click Link**: Verify authentication works
+4. **Check Email**: Look for OTP code (if email service configured)
+5. **Enter Code**: Verify authentication works
 6. **Setup Username**: Complete first-time user flow
 7. **Access Dashboard**: Verify protected routes work
 
@@ -121,7 +121,7 @@ pnpm db:status
 
 ## 📧 Email Service Setup
 
-For magic links to work, configure email service:
+For OTP emails to work, configure email service:
 
 ### Resend (Recommended)
 
@@ -135,9 +135,9 @@ For magic links to work, configure email service:
 
 ### Development Mode
 
-Without email service, magic links will be logged to console:
+Without email service, OTP codes will be logged to console:
 ```bash
-# Check API worker console for magic link URLs
+# Check API worker console for OTP codes
 cd apps/api-worker
 pnpm dev
 ```

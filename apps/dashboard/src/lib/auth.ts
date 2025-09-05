@@ -118,7 +118,7 @@ export function setSessionFlag(hasSession: boolean): void {
 
 // Clear all auth-related cookies and session flag
 export function clearAuthCookies(): void {
-  removeCookie('session_token', { path: '/' });
-  removeCookie('session_token', { path: '/', domain: '.lynkby.com' });
+  removeCookie('lb_sess', { path: '/' });
+  removeCookie('lb_sess', { path: '/', domain: '.lynkby.com' });
   setSessionFlag(false);
 }

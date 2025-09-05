@@ -27,7 +27,7 @@ export function ProtectedRoute({
       }
 
       // Redirect if username is required but user doesn't have one
-      if (requireUsername && user && user.isNewUser) {
+      if (requireUsername && user && !user.username) {
         router.push("/onboarding/username");
         return;
       }
@@ -52,7 +52,7 @@ export function ProtectedRoute({
   }
 
   // Don't render children if username is required but user doesn't have one
-  if (requireUsername && user && user.isNewUser) {
+  if (requireUsername && user && !user.username) {
     return null;
   }
 

@@ -1,20 +1,27 @@
 import { z } from "zod";
 
-// Magic link request schema
-export const RequestMagicLinkSchema = z.object({
+// OTP request schema
+export const RequestOtpSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  // Optional path on the app to redirect to after verification
-  redirectPath: z.string().startsWith('/').max(200).optional(),
 });
 
-export type RequestMagicLinkInput = z.infer<typeof RequestMagicLinkSchema>;
+export type RequestOtpInput = z.infer<typeof RequestOtpSchema>;
 
-// Magic link consumption schema
-export const ConsumeMagicLinkSchema = z.object({
-  token: z.string().min(1, "Token is required"),
+// OTP verification schema
+export const VerifyOtpSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  code: z.string().length(6, "Code must be 6 digits").regex(/^\d{6}$/, "Code must contain only digits"),
 });
 
-export type ConsumeMagicLinkInput = z.infer<typeof ConsumeMagicLinkSchema>;
+export type VerifyOtpInput = z.infer<typeof VerifyOtpSchema>;
+
+// OTP resend schema
+export const ResendOtpSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+export type ResendOtpInput = z.infer<typeof ResendOtpSchema>;
+
 
 // Username setup schema (for first-time users)
 export const SetupUsernameSchema = z.object({
@@ -48,14 +55,32 @@ export const SessionResponseSchema = z.object({
 
 export type SessionResponse = z.infer<typeof SessionResponseSchema>;
 
-// Magic link response schema
-export const MagicLinkResponseSchema = z.object({
+// OTP request response schema
+export const OtpRequestResponseSchema = z.object({
   ok: z.literal(true),
   message: z.string(),
   cooldown: z.number().optional(), // seconds until next request allowed
 });
 
-export type MagicLinkResponse = z.infer<typeof MagicLinkResponseSchema>;
+export type OtpRequestResponse = z.infer<typeof OtpRequestResponseSchema>;
+
+// OTP verification response schema
+export const OtpVerificationResponseSchema = z.object({
+  ok: z.literal(true),
+  user: z.object({
+    id: z.string(),
+    email: z.string().email(),
+    username: z.string().optional(),
+    isNewUser: z.boolean(),
+  }),
+  session: z.object({
+    expiresAt: z.string(),
+    maxAge: z.number(),
+  }),
+});
+
+export type OtpVerificationResponse = z.infer<typeof OtpVerificationResponseSchema>;
+
 
 // Error response schema
 export const AuthErrorResponseSchema = z.object({
@@ -70,20 +95,35 @@ export type AuthErrorResponse = z.infer<typeof AuthErrorResponseSchema>;
 
 // Rate limiting configuration
 export const RATE_LIMIT_CONFIG = {
-  EMAIL_PER_ADDRESS: {
+  // OTP rate limits (per AUTH.MD spec)
+  OTP_EMAIL_PER_ADDRESS: {
     maxRequests: 5,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
-  EMAIL_PER_IP: {
-    maxRequests: 20,
+  OTP_EMAIL_PER_IP: {
+    maxRequests: 5,
     windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  OTP_EMAIL_DAILY: {
+    maxRequests: 20,
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  },
+  OTP_RESEND_COOLDOWN: {
+    maxRequests: 1,
+    windowMs: 30 * 1000, // 30 seconds
+  },
+  OTP_VERIFY_ATTEMPTS: {
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000, // 10 minutes (per OTP)
   },
 } as const;
 
-// Magic link configuration
-export const MAGIC_LINK_CONFIG = {
-  TOKEN_LENGTH: 32,
-  TTL_MINUTES: 15,
+// OTP configuration
+export const OTP_CONFIG = {
+  CODE_LENGTH: 6,
+  TTL_MINUTES: 10,
   SESSION_DAYS: 30,
-  MAX_ATTEMPTS: 3, // max attempts to consume a token
+  MAX_ATTEMPTS: 5, // max attempts to verify a code
+  RESEND_COOLDOWN_SECONDS: 30,
 } as const;
+

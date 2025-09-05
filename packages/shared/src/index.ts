@@ -40,13 +40,11 @@ export function getProfile(username: string) {
 // Schemas
 export * from './schemas/auth';
 export * from './schemas/setup';
-export * from './schemas/login-request';
 export * from './schemas/common';
 
 // Types
 export * from './types/auth';
 export * from './types/setup';
-export * from './types/login-request';
 export * from './types/token';
 export * from './types/common';
 export * from './types/pages';

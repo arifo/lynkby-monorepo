@@ -1,14 +1,14 @@
 import { Hono } from "hono";
-import { rateLimit, rateLimitConfigs } from "../core/middleware/rate-limit";
 import { auth } from "../core/middleware/auth";
-import { getClientIP } from "../core/util/ip.utils";
 import type { AppEnv } from "../core/env";
 import { getAuthContainer } from "../features/auth/auth.container";
 import type { IAuthController } from "../features/auth/auth.interfaces";
+import { OtpController } from "../features/auth/otp.controller";
+import { csrf, csrfToken } from "../core/middleware/csrf";
 import { getSetupController } from "../features/setup/setup.container";
 import type { ISetupController } from "../features/setup/setup.interfaces";
 import { getPagesController } from "../features/pages/pages.container";
-import type { IPagesController } from "../features/pages/pages.interfaces";
+import { cleanupService } from "../core/services/cleanup.service";
 
 /**
  * Helper function to get auth controller for a request
@@ -57,25 +57,6 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
   // Auth routes
   const authRouter = new Hono<{ Bindings: AppEnv }>();
 
-  // Request magic link with rate limiting
-  authRouter.post(
-    "/request-link",
-    // rateLimit({
-    //   maxRequests: rateLimitConfigs.emailPerIP.maxRequests,
-    //   windowMs: rateLimitConfigs.emailPerIP.windowMs,
-    //   keyGenerator: (c) => `auth:request-link:ip:${getClientIP(c)}`,
-    // }),
-    (c) => {
-      const authController = getAuthController(c.env);
-      return authController.requestMagicLink(c);
-    }
-  );
-
-  // Consume magic link
-  authRouter.get("/verify", (c) => {
-    const authController = getAuthController(c.env);
-    return authController.consumeMagicLink(c);
-  });
 
 
 
@@ -91,25 +72,44 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
     return authController.logout(c);
   });
 
-  // Handoff pattern endpoints
-  authRouter.post("/request", (c) => {
-    const authController = getAuthController(c.env);
-    return authController.createLoginRequest(c);
+
+  // OTP endpoints (new authentication method)
+  function getOtpController(env: AppEnv): OtpController {
+    return new OtpController({
+      jwtSecret: env?.JWT_SECRET || "fallback-secret",
+      appBase: env?.APP_BASE || "https://app.lynkby.com",
+      nodeEnv: env?.NODE_ENV || "development",
+    });
+  }
+
+  // Request OTP code (CSRF protection disabled for OTP endpoints due to rate limiting)
+  authRouter.post("/otp/request", (c) => {
+    const otpController = getOtpController(c.env);
+    return otpController.requestOtp(c);
   });
 
-  authRouter.get("/wait", (c) => {
-    const authController = getAuthController(c.env);
-    return authController.waitForLoginRequest(c);
+  // Verify OTP code (CSRF protection disabled for OTP endpoints due to rate limiting)
+  authRouter.post("/otp/verify", (c) => {
+    const otpController = getOtpController(c.env);
+    return otpController.verifyOtp(c);
   });
 
-  authRouter.post("/finalize", (c) => {
-    const authController = getAuthController(c.env);
-    return authController.finalizeLoginRequest(c);
+  // Resend OTP code (CSRF protection disabled for OTP endpoints due to rate limiting)
+  authRouter.post("/otp/resend", (c) => {
+    const otpController = getOtpController(c.env);
+    return otpController.resendOtp(c);
   });
 
-  authRouter.post("/verify-code", (c) => {
-    const authController = getAuthController(c.env);
-    return authController.verifyCode(c);
+
+  // Cleanup endpoint (for cron jobs)
+  authRouter.post("/cleanup", async (c) => {
+    try {
+      const result = await cleanupService.runCleanup();
+      return c.json({ ok: true, ...result });
+    } catch (error) {
+      console.error('Cleanup failed', error);
+      return c.json({ ok: false, error: "Cleanup failed" }, 500);
+    }
   });
 
   // Auth health check
@@ -118,29 +118,27 @@ export function createV1Router(): Hono<{ Bindings: AppEnv }> {
     return authController.healthCheck(c);
   });
 
-  // Auth info endpoint
-  authRouter.get("/", (c) => {
+  // Auth info endpoint (sets CSRF token)
+  authRouter.get("/", csrfToken, (c) => {
     return c.json({
       ok: true,
       service: "Authentication Service",
       version: "2.0.0",
       endpoints: {
-        "POST /request-link": "Request magic link for passwordless login (legacy)",
-        "GET /verify": "Verify magic link and create session (legacy)",
-        "POST /request": "Create login request with handoff pattern",
-        "GET /wait": "Wait for login request completion",
-        "POST /finalize": "Finalize login request and create session",
-        "POST /verify-code": "Verify 6-digit code (fallback)",
+        "POST /otp/request": "Request OTP code for authentication",
+        "POST /otp/verify": "Verify OTP code and create session",
+        "POST /otp/resend": "Resend OTP code",
         "GET /me": "Get current user information",
         "POST /logout": "Logout and clear session",
         "GET /health": "Service health check",
+        "GET /": "Get service info and CSRF token",
       },
       features: [
-        "Passwordless authentication with magic links",
-        "Handoff pattern for mobile webview compatibility",
-        "6-digit code fallback for email clients",
-        "Secure session management with HttpOnly cookies",
+        "OTP-based authentication with 6-digit codes",
+        "Email delivery via Resend API",
+        "CSRF protection for all mutating requests",
         "Rate limiting and abuse protection",
+        "Secure session management with HttpOnly cookies",
         "Disposable email domain blocking",
         "Automatic session extension",
       ],

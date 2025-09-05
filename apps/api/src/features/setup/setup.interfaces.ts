@@ -9,6 +9,7 @@ import type {
 export interface SetupModuleConfig {
   nodeEnv: string;
   appBase: string;
+  jwtSecret: string;
 }
 
 // Setup service interface

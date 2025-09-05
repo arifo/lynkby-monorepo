@@ -7,6 +7,11 @@ export interface SendMagicLinkParams {
   code?: string;
 }
 
+export interface SendOtpParams {
+  to: string;
+  code: string;
+}
+
 class EmailService extends BaseService {
   async sendMagicLinkEmail(params: SendMagicLinkParams): Promise<void> {
     // Use environment variables with fallbacks to params
@@ -48,6 +53,58 @@ class EmailService extends BaseService {
     }
 
     throw new Error('Unsupported email provider');
+  }
+
+  async sendOtpEmail(params: SendOtpParams): Promise<void> {
+    // Use environment variables with fallbacks
+    const from = (this.getEnvVar('EMAIL_FROM') as string) || 'login@lynkby.com';
+    const supportEmail = (this.getEnvVar('SUPPORT_EMAIL') as string) || 'support@lynkby.com';
+    const appName = (this.getEnvVar('APP_NAME') as string) || 'Lynkby';
+    const apiKey = this.getRequiredEnvVar('RESEND_API_KEY');
+    
+    const { to, code } = params;
+
+    const subject = `Your ${appName} code: ${code}`;
+    const text = this.renderOtpText({ appName, code, supportEmail });
+    const html = this.renderOtpHTML({ appName, code, supportEmail });
+
+    try {
+      const resp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `${appName} <${from}>`,
+          to: [to],
+          subject,
+          text,
+          html,
+          tags: [{ name: 'purpose', value: 'auth-otp' }],
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        logger.warn('Failed to send OTP email via Resend', { 
+          status: resp.status, 
+          body: errText,
+          to,
+          code: code.substring(0, 2) + '****' // Log partial code for debugging
+        });
+        
+        // Return generic success to avoid enumeration
+        logger.info('OTP email send attempted', { to });
+        return;
+      }
+      
+      logger.info('OTP email sent via Resend', { to });
+    } catch (error) {
+      logger.error('Failed to send OTP email', { error, to });
+      // Don't throw - return generic success to avoid enumeration
+      logger.info('OTP email send attempted', { to });
+    }
   }
 
   private renderMagicLinkHTML({ appName, url, supportEmail, code }: { appName: string; url: string; supportEmail?: string; code?: string }) {
@@ -94,6 +151,71 @@ class EmailService extends BaseService {
 
         ${supportEmail ? `<p style="color:#666;font-size:12px;margin-top:16px">Need help? Contact <a href="mailto:${supportEmail}">${supportEmail}</a></p>` : ''}
       </div>
+    `;
+  }
+
+  private renderOtpText({ appName, code, supportEmail }: { appName: string; code: string; supportEmail?: string }): string {
+    return `Your ${appName} sign-in code is: ${code}
+
+It expires in 10 minutes. If you didn't request it, ignore this email.
+
+Need help? ${supportEmail || ''}`;
+  }
+
+  private renderOtpHTML({ appName, code, supportEmail }: { appName: string; code: string; supportEmail?: string }): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Your ${appName} Code</title>
+        </head>
+        <body style="margin:0;padding:0;background-color:#fafafa;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif">
+          <div style="max-width:420px;margin:0 auto;padding:24px;background-color:#ffffff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
+            
+            <!-- Logo placeholder -->
+            <div style="text-align:center;margin-bottom:24px">
+              <div style="width:40px;height:40px;background-color:#4f46e5;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px">
+                L
+              </div>
+            </div>
+            
+            <!-- Header -->
+            <h1 style="font-size:24px;font-weight:600;color:#111827;text-align:center;margin:0 0 8px;line-height:32px">
+              Sign in to ${appName}
+            </h1>
+            
+            <!-- Code section -->
+            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin:24px 0;text-align:center">
+              <p style="color:#64748b;font-size:14px;margin:0 0 16px;line-height:20px">
+                Enter this 6-digit code to complete your sign-in:
+              </p>
+              <div style="background-color:#ffffff;border:2px solid #4f46e5;border-radius:8px;padding:20px;margin:0 auto;display:inline-block">
+                <span style="font-size:32px;font-weight:bold;color:#4f46e5;letter-spacing:4px;font-family:monospace">${code}</span>
+              </div>
+              <p style="color:#64748b;font-size:12px;margin:16px 0 0;line-height:18px">
+                This code expires in 10 minutes
+              </p>
+            </div>
+            
+            <!-- Security notice -->
+            <div style="background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin:24px 0">
+              <p style="color:#92400e;font-size:13px;margin:0;line-height:18px">
+                <strong>Security:</strong> If you didn't request this code, you can safely ignore this email. Your account remains secure.
+              </p>
+            </div>
+            
+            <!-- Footer -->
+            <div style="border-top:1px solid #e5e7eb;padding-top:16px;margin-top:24px;text-align:center">
+              <p style="color:#6b7280;font-size:12px;margin:0;line-height:18px">
+                ${supportEmail ? `Need help? Contact <a href="mailto:${supportEmail}" style="color:#4f46e5;text-decoration:none">${supportEmail}</a>` : ''}
+              </p>
+            </div>
+            
+          </div>
+        </body>
+      </html>
     `;
   }
 }

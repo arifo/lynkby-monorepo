@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { pagesAPI, setupAPI } from "@/lib/api";
 import type { PageData } from "@lynkby/shared";
 import { Copy, ExternalLink, Loader2, Plus, Trash2, X } from "lucide-react";
+import { SuccessModal } from "@/components/ui/success-modal";
 
 interface Link {
   id?: string;
@@ -34,6 +35,7 @@ export default function SetupPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Form state
   const [displayName, setDisplayName] = useState("");
@@ -48,7 +50,7 @@ export default function SetupPage() {
       router.replace("/login");
       return;
     }
-    if (!user?.username) {
+    if (isAuthenticated && !user?.username) {
       router.replace("/onboarding/username");
       return;
     }
@@ -231,19 +233,27 @@ export default function SetupPage() {
         throw new Error(linksResponse.error || "Failed to update links");
       }
 
-      setSuccessMessage("Page saved successfully! Changes will appear within ~60s");
-      setTimeout(() => setSuccessMessage(null), 5000);
+      // Mark first save as completed
+      try {
+        await pagesAPI.markFirstSaveCompleted();
+      } catch (err) {
+        console.warn("Failed to mark first save completed:", err);
+        // Don't fail the entire save if this fails
+      }
 
-      // Redirect to dashboard after successful save
-      setTimeout(() => {
-        router.replace("/dashboard");
-      }, 2000);
+      // Show success modal
+      setShowSuccessModal(true);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save page");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleGoToDashboard = () => {
+    setShowSuccessModal(false);
+    router.replace("/dashboard/home");
   };
 
   if (isLoading) {
@@ -276,6 +286,15 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        liveUrl={pageData?.liveUrl || `https://${user?.username}.lynkby.com`}
+        username={user?.username || ""}
+        onGoToDashboard={handleGoToDashboard}
+      />
+
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Success Bar */}
         {pageData?.liveUrl && (

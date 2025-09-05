@@ -5,8 +5,6 @@ import type { AppEnv } from "./src/core/env";
 import { HealthCheck }   from "./openapi/endpoints/schemas/healthCheck";
 import { V1Info } from "./openapi/endpoints/schemas/v1Info";
   // Auth endpoints (v1)
-  import { AuthRequestMagicLink } from "./openapi/endpoints/schemas/v1/auth/authRequestMagicLink";
-  import { AuthVerifyMagicLink } from "./openapi/endpoints/schemas/v1/auth/authVerifyMagicLink";
   import { AuthGetCurrentUser } from "./openapi/endpoints/schemas/v1/auth/authGetCurrentUser";
   import { AuthLogout } from "./openapi/endpoints/schemas/v1/auth/authLogout";
   
@@ -32,8 +30,6 @@ export function setupOpenAPI(app: Hono<{ Bindings: AppEnv }>) {
 
 
   // Auth endpoints
-  openapi.post("/v1/auth/request-link", AuthRequestMagicLink);
-  openapi.post("/v1/auth/verify", AuthVerifyMagicLink);
   openapi.get("/v1/auth/me", AuthGetCurrentUser);
   openapi.post("/v1/auth/logout", AuthLogout);
   

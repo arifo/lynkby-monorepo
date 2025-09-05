@@ -11,21 +11,22 @@ import type {
   SetupState
 } from './common';
 import type { 
-  MagicLinkToken,
-  UserSession
+  UserSession,
+  OtpToken
 } from './auth';
 
 // Auth repository interfaces
-export interface CreateMagicLinkTokenData {
+export interface CreateOtpTokenData {
   id: string;
   email: string;
-  tokenHash: string;
+  codeHash: string;
   createdAt: Date;
   expiresAt: Date;
+  attempts: number;
   ipCreatedFrom?: string;
   uaCreatedFrom?: string;
-  redirectPath?: string;
 }
+
 
 export interface CreateUserSessionData {
   id: string;
@@ -109,11 +110,12 @@ export interface ISetupStateRepository {
 
 // Auth repository interfaces
 export interface IAuthRepository {
-  // Magic link token operations
-  saveMagicLinkToken(data: CreateMagicLinkTokenData): Promise<void>;
-  findMagicLinkTokenByHash(tokenHash: string): Promise<MagicLinkToken | null>;
-  markTokenAsUsed(tokenId: string): Promise<void>;
-  deleteExpiredMagicLinkTokens(): Promise<void>;
+  // OTP token operations
+  saveOtpToken(data: CreateOtpTokenData): Promise<void>;
+  findMostRecentOtpToken(email: string): Promise<OtpToken | null>;
+  incrementOtpAttempts(tokenId: string): Promise<void>;
+  markOtpAsConsumed(tokenId: string): Promise<void>;
+  deleteExpiredOtpTokens(): Promise<void>;
   
   // User session operations
   saveUserSession(data: CreateUserSessionData): Promise<void>;
@@ -138,6 +140,5 @@ export type {
   SetupState
 } from './common';
 export type { 
-  MagicLinkToken,
   UserSession
 } from './auth';

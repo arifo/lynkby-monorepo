@@ -27,6 +27,7 @@ export function createSetupContainer(env: AppEnv): SetupContainer {
   const config: SetupModuleConfig = {
     nodeEnv: env.NODE_ENV,
     appBase: env.APP_BASE,
+    jwtSecret: env.JWT_SECRET,
   };
 
   return new SetupContainer(config);

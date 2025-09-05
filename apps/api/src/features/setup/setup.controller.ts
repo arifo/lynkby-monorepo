@@ -33,28 +33,37 @@ export class SetupController implements ISetupController {
 
   // Get user from session token
   private async getUserFromSession(c: Context): Promise<{ userId: string; email: string }> {
-    const sessionToken = c.req.header("Cookie")?.match(/session_token=([^;]+)/)?.[1];
+    const sessionToken = c.req.header("Cookie")?.match(/lb_sess=([^;]+)/)?.[1];
     
     if (!sessionToken) {
       throw createError.unauthorized("No active session found");
     }
     
-    // Validate session
-    const sessionData = await authRepository.findSessionByHash(tokenUtils.hashToken(sessionToken));
-    if (!sessionData || sessionData.expiresAt < new Date() || sessionData.revokedAt) {
+    try {
+      // Verify JWT token
+      const payload = tokenUtils.verifyToken(sessionToken, this.config.jwtSecret);
+      
+      // Find session by hash
+      const tokenHash = tokenUtils.hashToken(sessionToken);
+      const sessionData = await authRepository.findSessionByHash(tokenHash);
+      
+      if (!sessionData || sessionData.expiresAt < new Date() || sessionData.revokedAt) {
+        throw createError.unauthorized("Invalid or expired session");
+      }
+
+      // Get user
+      const user = await userRepository.findById(sessionData.userId);
+      if (!user) {
+        throw createError.unauthorized("User not found");
+      }
+
+      return {
+        userId: user.id,
+        email: user.email
+      };
+    } catch (error) {
       throw createError.unauthorized("Invalid or expired session");
     }
-
-    // Get user
-    const user = await userRepository.findById(sessionData.userId);
-    if (!user) {
-      throw createError.unauthorized("User not found");
-    }
-
-    return {
-      userId: user.id,
-      email: user.email
-    };
   }
   
   // Check username availability

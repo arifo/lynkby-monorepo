@@ -18,9 +18,8 @@ model User {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   lastLoginAt     DateTime?
-  isVerified      Boolean          @default(false)
-  loginRequests   LoginRequest[]
-  magicLinkTokens MagicLinkToken[]
+  isVerified      Boolean          @default(true)
+  otpTokens       OtpToken[]
   page            Page?
   sessions        UserSession[]
   setup           SetupState?
@@ -67,23 +66,22 @@ enum Layout {
   LINKS_LIST
 }
 
-model MagicLinkToken {
+model OtpToken {
   id            String    @id @default(cuid())
-  email         String    @unique @db.VarChar(255)
-  tokenHash     String    @unique
+  email         String    @db.VarChar(255)
+  codeHash      String    @unique
   createdAt     DateTime  @default(now())
   expiresAt     DateTime
-  usedAt        DateTime?
+  consumedAt    DateTime?
+  attempts      Int       @default(0)
   ipCreatedFrom String?
   uaCreatedFrom String?
-  redirectPath  String?
-  requestId     String?
   user          User      @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
 
-  @@map("magic_link_tokens")
-  @@index([email], map: "magic_link_tokens_email_idx")
-  @@index([expiresAt], map: "magic_link_tokens_expiresAt_idx")
-  @@index([requestId], map: "magic_link_tokens_requestId_idx")
+  @@map("otp_tokens")
+  @@index([email], map: "otp_tokens_email_idx")
+  @@index([expiresAt], map: "otp_tokens_expiresAt_idx")
+  @@index([consumedAt], map: "otp_tokens_consumedAt_idx")
 }
 
 model UserSession {
@@ -103,25 +101,6 @@ model UserSession {
   @@index([expiresAt], map: "user_sessions_expiresAt_idx")
 }
 
-model LoginRequest {
-  // Use DB-generated UUID to ensure inserts via raw SQL don't need to provide id
-  id             String    @id @default(dbgenerated("gen_random_uuid()"))
-  requestId      String    @unique
-  email          String    @db.VarChar(255)
-  code           String    @db.VarChar(6)
-  status         String    @default("pending")
-  userId         String?
-  handshakeNonce String?
-  expiresAt      DateTime
-  createdAt      DateTime  @default(now())
-  completedAt    DateTime?
-  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@map("login_requests")
-  @@index([status, expiresAt], map: "login_requests_status_expires_idx")
-  @@index([userId], map: "login_requests_userId_idx")
-  @@index([email], map: "login_requests_email_idx")
-}
 
 model SetupState {
   id                    String   @id @default(cuid())

@@ -24,7 +24,7 @@ app.use("*", cors({
 	],
 	credentials: true,
 	allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-	allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+	allowHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-Token"],
 }));
 
 // Create v1 router

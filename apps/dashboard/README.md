@@ -33,13 +33,13 @@ The dashboard will be available at `http://localhost:3001`
 
 ## 🔐 Authentication Flow
 
-The dashboard uses a magic link authentication system powered by the Lynkby API worker:
+The dashboard uses an OTP (One-Time Password) authentication system powered by the Lynkby API worker:
 
 ### Flow Overview
 
-1. **Login Request**: User enters email on `/login` page
-2. **Magic Link**: API sends magic link email via Resend
-3. **Email Verification**: User clicks link in email
+1. **OTP Request**: User enters email on `/login` page
+2. **OTP Email**: API sends 6-digit code via Resend
+3. **Code Verification**: User enters 6-digit code
 4. **Session Creation**: API creates secure session with HttpOnly cookie
 5. **Username Setup**: First-time users set username on `/setup-username` page
 6. **Dashboard Access**: Authenticated users access protected dashboard
@@ -76,8 +76,8 @@ The dashboard connects to the Lynkby API worker running on port 8787:
 
 ### Authentication Endpoints
 
-- `POST /v1/auth/request-link` - Request magic link
-- `GET /v1/auth/verify?token=...` - Verify magic link
+- `POST /v1/auth/otp/request` - Request OTP code
+- `POST /v1/auth/otp/verify` - Verify OTP code
 - `GET /v1/auth/me` - Get current user
 - `POST /v1/auth/setup-username` - Set username for new users
 - `POST /v1/auth/logout` - Logout and clear session
@@ -124,7 +124,7 @@ pnpm type-check   # Run TypeScript checks
 1. **API Worker**: Ensure API worker is running on port 8787
 2. **Environment**: Set up `.env.local` with correct API URL
 3. **Database**: Ensure database is accessible via API worker
-4. **Email**: Configure Resend API key for magic link emails
+4. **Email**: Configure Resend API key for OTP emails
 
 ## 🔄 State Management
 
