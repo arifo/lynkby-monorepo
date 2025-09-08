@@ -116,6 +116,26 @@ export interface PublicPageJSON {
   };
 }
 
+// Public page data for rendering (matches API response structure)
+export interface PublicPageData {
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  page: {
+    layout: 'LINKS_LIST';
+    theme: 'classic' | 'contrast' | 'warm';
+    published: boolean;
+    updatedAt?: string;
+  };
+  links: Array<{
+    title: string;
+    url: string;
+    active: boolean;
+    position: number;
+  }>;
+}
+
 // Page service interfaces
 export interface IPagesService {
   setEnvironment(env: any): void;

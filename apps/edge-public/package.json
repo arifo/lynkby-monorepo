@@ -1,17 +1,27 @@
 {
 	"name": "@lynkby/edge-public",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"private": true,
+	"type": "module",
 	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
+		"dev": "wrangler dev --local --port 8789",
+		"build": "tsc -p tsconfig.json",
+		"deploy": "pnpm build && wrangler deploy",
+		"deploy:dev": "pnpm build && wrangler deploy --env development",
+		"deploy:prod": "pnpm build && wrangler deploy",
+		"start": "pnpm dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@lynkby/shared": "workspace:*",
+		"@lynkby/public-renderer": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
-		"typescript": "^5.5.2",
+		"@cloudflare/workers-types": "^4.20250115.0",
+		"typescript": "^5.5.4",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.34.0"
 	}
